@@ -190,9 +190,16 @@ public class TorrentDetailActivity extends Activity {
                     .where(TorrentTaskFile_Table.torrentId.eq(task.getId())).queryList();
             task.setFileList(files);
             task.update();
+            try {
+                torrentInfo = TorrentInfoUtil.getTorrentInfo(file.getAbsolutePath());
+            } catch (Exception e) {
+                updateStatus(true,"解析失败");
+                file.delete();
+                return;
+            }
             if(files==null||files.size()==0){
                 try {
-                    torrentInfo = TorrentInfoUtil.getTorrentInfo(file.getAbsolutePath());
+
                     files=new ArrayList<TorrentTaskFile>();
                     FileStorage fs=  torrentInfo.origFiles();
                     String nameFolder= torrentInfo.name();//.substring(0,task.getFileName().lastIndexOf("."));

@@ -512,7 +512,10 @@ public class Torrent implements AlertListener {
     public int[] types() {
         return new int[]{
                 AlertType.PIECE_FINISHED.swig(),
-                AlertType.BLOCK_FINISHED.swig()
+                AlertType.BLOCK_FINISHED.swig(),
+                AlertType.PEER_CONNECT.swig(),
+                AlertType.PEER_DISCONNECTED.swig(),
+                AlertType.SESSION_STATS.swig()
         };
     }
 
