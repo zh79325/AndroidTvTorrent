@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@style/Theme.Leanback"></style>
+    <style name="AppTheme.Button" parent="Widget.AppCompat.Button">
+        <item name="android:state_pressed" >
+            @style/Widget.AppCompat.Button.Borderless.Colored
+        </item>
+        <item name="android:state_hovered" >
+            @style/Widget.AppCompat.Button.Borderless
+        </item>
+        <item name="android:state_focused" >
+            @style/Widget.AppCompat.Button.Colored
+        </item>
+    </style>
+</resources>

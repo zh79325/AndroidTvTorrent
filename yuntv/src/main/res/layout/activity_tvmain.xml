@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/base_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_marginTop="27dp"
+    android:layout_marginLeft="48dp"
+    android:layout_marginRight="48dp"
+    android:layout_marginBottom="27dp" >
+
+    <EditText
+        android:id="@+id/search_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="输入关键字"
+        android:inputType="textPersonName"
+        android:nextFocusDown="@+id/search_btn"/>
+
+
+    <Button
+        android:id="@+id/search_btn"
+        android:theme="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nextFocusUp="@id/search_text"
+        android:nextFocusDown="@+id/load_local"
+        android:text="搜索" />
+
+
+    <Button
+        android:id="@+id/load_local"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nextFocusUp="@id/search_btn"
+        android:nextFocusDown="@+id/local_history"
+        android:text="从本地选择" />
+
+    <Button
+        android:id="@+id/local_history"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nextFocusUp="@id/load_local"
+        android:nextFocusDown="@+id/result_list_view"
+        android:text="本地历史" />
+
+    <ProgressBar
+        android:id="@+id/searchIngPb"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <ListView
+        android:id="@+id/result_list_view"
+        android:layout_width="match_parent"
+        android:nextFocusUp="@id/load_local"
+        android:nextFocusDown="@+id/next_btn"
+        android:layout_weight="1"
+        android:layout_height="0dip" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/prev_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:nextFocusUp="@id/result_list_view"
+            android:layout_weight="1"
+            android:nextFocusRight="@id/next_btn"
+            android:text="上一页"
+            android:theme="@style/Widget.AppCompat.Button.Colored" />
+        <Button
+            android:id="@+id/next_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:nextFocusUp="@id/result_list_view"
+            android:layout_weight="1"
+            android:nextFocusLeft="@id/prev_btn"
+            android:text="下一页"
+            android:theme="@style/Widget.AppCompat.Button.Colored" />
+    </LinearLayout>
+
+
+</LinearLayout>
