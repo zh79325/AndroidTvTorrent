@@ -1,6 +1,7 @@
 package com.github.se_bastiaan.torrentstream;
 
 import com.frostwire.jlibtorrent.AlertListener;
+import com.frostwire.jlibtorrent.TorrentHandle;
 import com.frostwire.jlibtorrent.alerts.Alert;
 import com.frostwire.jlibtorrent.alerts.AlertType;
 
@@ -9,14 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 class TorrentInputStream extends FilterInputStream implements AlertListener {
-    private Torrent torrent;
+    private TorrentHandle torrentHandle;
     private boolean stopped;
     private long location;
+    private TorrentFileInfo fileInfo;
 
-    TorrentInputStream(Torrent torrent, InputStream inputStream) {
+    TorrentInputStream(TorrentFileInfo fileInfo,TorrentHandle torrentHandle, InputStream inputStream) {
         super(inputStream);
 
-        this.torrent = torrent;
+        this.torrentHandle = torrentHandle;
+        this.fileInfo=fileInfo;
     }
 
     @Override
@@ -32,7 +35,7 @@ class TorrentInputStream extends FilterInputStream implements AlertListener {
     private synchronized boolean waitForPiece(long offset) {
         while (!Thread.currentThread().isInterrupted() && !stopped) {
             try {
-                if (torrent.hasBytes(offset)) {
+                if (fileInfo.hasBytes(torrentHandle,offset)) {
                     return true;
                 }
 
@@ -58,7 +61,7 @@ class TorrentInputStream extends FilterInputStream implements AlertListener {
 
     @Override
     public synchronized int read(byte[] buffer, int offset, int length) throws IOException {
-        int pieceLength = torrent.getTorrentHandle().torrentFile().pieceLength();
+        int pieceLength = torrentHandle.torrentFile().pieceLength();
 
         for (int i = 0; i < length; i += pieceLength) {
             if (!waitForPiece(location + i)) {

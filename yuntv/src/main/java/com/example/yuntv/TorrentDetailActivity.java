@@ -74,7 +74,7 @@ public class TorrentDetailActivity extends Activity {
     ProgressBar torrentProgress;
     Button deleteBtn;
 
-    TorrentStream  []torrentStreams;;
+    TorrentStream  torrentStream;;
     TorrentInfo torrentInfo;
     TorrentTask task;
     Context context;
@@ -239,7 +239,6 @@ public class TorrentDetailActivity extends Activity {
                 updateStatus(true,"解析完成");
             }
             final List<TorrentTaskFile> adaptorFiles=task.getFileList();
-            torrentStreams=new TorrentStream[adaptorFiles.size()];
             ThreadUtils.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -282,10 +281,8 @@ public class TorrentDetailActivity extends Activity {
                                 {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        for (TorrentStream stream : torrentStreams) {
-                                            if(stream!=null){
-                                                stream.stopStream();
-                                            }
+                                        if(torrentStream!=null){
+                                            torrentStream.stopStream();
                                         }
                                         if(task.getFileStoreFolder()!=null){
                                             File f=new File(task.getFileStoreFolder());
@@ -293,6 +290,7 @@ public class TorrentDetailActivity extends Activity {
                                                 f.delete();
                                             }
                                         }
+                                        task.delete();
 
                                     }
 
@@ -414,7 +412,7 @@ public class TorrentDetailActivity extends Activity {
     }
     TorrentStream getStream(final TorrentTaskFile fileInfo){
         final int i=fileInfo.getFileIndex();
-        if(torrentStreams[i]==null){
+        if(torrentStream==null){
             torrentHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -422,15 +420,15 @@ public class TorrentDetailActivity extends Activity {
                             .saveLocation(fileInfo.getStoreFolder())
                             .removeFilesAfterStop(false)
                             .build();
-                    DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(adaptor,fileInfo);
-                    torrentStreams[i] = TorrentStream.init(torrentOptions);
-                    torrentStreams[i].addListener(downloadTorrentListener);
-                    torrentStreams[i].startStream(torrentInfo,fileInfo.getFileIndex());
+                    DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(adaptor);
+                    torrentStream = TorrentStream.init(torrentOptions);
+                    torrentStream.addListener(downloadTorrentListener);
+                    torrentStream.startStream(torrentInfo,fileInfo.getFileIndex());
                 }
             });
 
         }
-        return torrentStreams[i];
+        return torrentStream;
     }
 
 }

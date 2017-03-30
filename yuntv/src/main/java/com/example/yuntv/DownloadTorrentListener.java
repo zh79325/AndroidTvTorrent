@@ -24,15 +24,13 @@ import com.raizlabs.android.dbflow.sql.language.SQLite;
 public class DownloadTorrentListener implements TorrentListener {
 
     TorrentAdaptor adaptor;
-    TorrentTaskFile fileInfo;
 
-    public DownloadTorrentListener(TorrentAdaptor adaptor, TorrentTaskFile fileInfo) {
+    public DownloadTorrentListener(TorrentAdaptor adaptor) {
         this.adaptor = adaptor;
-        this.fileInfo = fileInfo;
     }
 
     @Override
-    public void onStreamPrepared(Torrent torrent) {
+    public void onStreamPrepared(Torrent torrent, int index) {
         notifyAdaptor();
         torrent.startDownload();
     }
@@ -47,9 +45,10 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     @Override
-    public void onStreamStarted(Torrent torrent) {
+    public void onStreamStarted(Torrent torrent, int index) {
+        TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setPercent(0);
-        updateDataBase();
+        updateDataBase(fileInfo);
         notifyAdaptor();
     }
 
@@ -59,21 +58,23 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     @Override
-    public void onStreamReady(Torrent torrent) {
+    public void onStreamReady(Torrent torrent,int index) {
+        TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setStreamReady(true);
-        updateDataBase();
+        updateDataBase(fileInfo);
         notifyAdaptor();
     }
 
     @Override
-    public void onStreamProgress(Torrent torrent, StreamStatus status) {
+    public void onStreamProgress(Torrent torrent, StreamStatus status,int index) {
+        TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setPercent(status.progress);
         fileInfo.setSpeed(status.downloadSpeed);
-        updateDataBase();
+        updateDataBase(fileInfo);
         notifyAdaptor();
     }
 
-    private void updateDataBase() {
+    private void updateDataBase(TorrentTaskFile fileInfo) {
         SQLite.update(TorrentTaskFile.class)
                 .set(
                         TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()),
@@ -87,8 +88,14 @@ public class DownloadTorrentListener implements TorrentListener {
 
     @Override
     public void onStreamStopped() {
+
+    }
+
+    @Override
+    public void onDownloadFinish(Torrent torrentExtend, int index) {
+        TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setFinished(true);
-        updateDataBase();
+        updateDataBase(fileInfo);
         notifyAdaptor();
     }
 

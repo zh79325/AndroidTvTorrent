@@ -57,13 +57,13 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile> implements Tor
     }
 
     @Override
-    public void onStreamPrepared(Torrent torrent) {
+    public void onStreamPrepared(Torrent torrent, int index) {
         Log.d(TORRENT, "OnStreamPrepared");
         torrent.startDownload();
     }
 
     @Override
-    public void onStreamStarted(Torrent torrent) {
+    public void onStreamStarted(Torrent torrent, int index) {
         Log.d(TORRENT, "onStreamStarted");
     }
 
@@ -73,8 +73,8 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile> implements Tor
     }
 
     @Override
-    public void onStreamReady(Torrent torrent) {
-        Log.d(TORRENT, "onStreamReady: " + torrent.getVideoFile());
+    public void onStreamReady(Torrent torrent, int index) {
+//        Log.d(TORRENT, "onStreamReady: " + torrent.getVideoFile());
 //        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(torrent.getVideoFile().toString()));
 //        intent.setDataAndType(Uri.parse(torrent.getVideoFile().toString()), "video/mp4");
     }
@@ -86,7 +86,7 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile> implements Tor
         return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
     @Override
-    public void onStreamProgress(Torrent torrent, StreamStatus status) {
+    public void onStreamProgress(Torrent torrent, StreamStatus status, int i) {
         Log.d(TORRENT, "Progress: " + status.progress+" speed:"+readableFileSize((long) status.downloadSpeed)+"/s");
         Log.d(TORRENT, "Buff Progress: " + status.bufferProgress+" seeds:"+status.seeds  );
         TextView tvName = (TextView) ((Activity) context).findViewById(R.id.status);
@@ -106,4 +106,8 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile> implements Tor
 
     }
 
+    @Override
+    public void onDownloadFinish(Torrent torrentExtend, int index) {
+
+    }
 }

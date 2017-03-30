@@ -21,17 +21,19 @@ import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
 
 public interface TorrentListener {
-    void onStreamPrepared(Torrent torrent);
+    void onStreamPrepared(Torrent torrent, int index);
 
-    void onStreamStarted(Torrent torrent);
+    void onStreamStarted(Torrent torrent, int index);
 
     void onStreamError(Torrent torrent, Exception e);
 
-    void onStreamReady(Torrent torrent);
+    void onStreamReady(Torrent torrent, int index);
 
-    void onStreamProgress(Torrent torrent, StreamStatus status);
+    void onStreamProgress(Torrent torrent, StreamStatus status, int i);
 
     void onStreamStopped();
 
     void fireAlert(Alert<?> alert);
+
+    void onDownloadFinish(Torrent torrentExtend, int index);
 }
