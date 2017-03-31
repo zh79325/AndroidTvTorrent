@@ -41,14 +41,17 @@ import com.example.yuntv.ui.TorrentAdaptor;
 import com.example.yuntv.ui.TorrentClickListener;
 import com.frostwire.jlibtorrent.FileStorage;
 import com.frostwire.jlibtorrent.TorrentInfo;
+import com.github.se_bastiaan.torrentstream.Torrent;
 import com.github.se_bastiaan.torrentstream.TorrentOptions;
 import com.github.se_bastiaan.torrentstream.TorrentStream;
 import com.github.se_bastiaan.torrentstream.utils.ThreadUtils;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -396,7 +399,15 @@ public class TorrentDetailActivity extends Activity {
     }
 
     private void playDownload(TorrentTaskFile fileInfo) {
-        Toast.makeText(context,"start play",Toast.LENGTH_LONG).show();
+        Torrent torrent=torrentStream.getCurrentTorrent();
+        try {
+            InputStream is=torrent.getVideoStream(fileInfo.getFileIndex());
+//            IjkVideoView mVideoView = (IjkVideoView) findViewById(R.id.video_view);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(context,"Failed "+e.getMessage(),Toast.LENGTH_LONG).show();
+        }
+
     }
 
     private void pauseDownload(TorrentTaskFile fileInfo) {
@@ -411,7 +422,6 @@ public class TorrentDetailActivity extends Activity {
         }
     }
     TorrentStream getStream(final TorrentTaskFile fileInfo){
-        final int i=fileInfo.getFileIndex();
         if(torrentStream==null){
             torrentHandler.post(new Runnable() {
                 @Override
@@ -420,7 +430,7 @@ public class TorrentDetailActivity extends Activity {
                             .saveLocation(fileInfo.getStoreFolder())
                             .removeFilesAfterStop(false)
                             .build();
-                    DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(adaptor);
+                    DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(adaptor,fileInfo);
                     torrentStream = TorrentStream.init(torrentOptions);
                     torrentStream.addListener(downloadTorrentListener);
                     torrentStream.startStream(torrentInfo,fileInfo.getFileIndex());
@@ -431,4 +441,7 @@ public class TorrentDetailActivity extends Activity {
         return torrentStream;
     }
 
+    public void updateTaskUI(TorrentTaskFile task) {
+        updateStatus(true,String.format("%s  %s/s",TorrentAdaptor.readablePercent(task.getPercent()),TorrentAdaptor.readableFileSize((long) task.getSpeed())));
+    }
 }

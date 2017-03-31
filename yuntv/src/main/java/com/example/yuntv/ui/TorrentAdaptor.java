@@ -1,6 +1,7 @@
 package com.example.yuntv.ui;
 
-import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.yuntv.R;
+import com.example.yuntv.TorrentDetailActivity;
 import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
 
@@ -23,6 +25,10 @@ import java.util.List;
 
 public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
 
+    private HandlerThread torrentThread;
+    private Handler torrentHandler;
+
+
     private static final String TORRENT = "Torrent";
 
     TorrentClickListener listener;
@@ -31,10 +37,14 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         this.listener = listener;
     }
 
-    Context context;
-    public TorrentAdaptor(Context context, int resource, List<TorrentTaskFile> objects) {
+    TorrentDetailActivity context;
+    public TorrentAdaptor(TorrentDetailActivity context, int resource, List<TorrentTaskFile> objects) {
         super(context, resource, objects);
         this.context=context;
+
+        torrentThread = new HandlerThread("Torrent Adaptor Thread");
+        torrentThread.start();
+        torrentHandler=new Handler(torrentThread.getLooper());
     }
 
 
@@ -47,19 +57,8 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         }
         TextView name = (TextView) convertView.findViewById(R.id.torrent_file_name);
         TextView percent = (TextView) convertView.findViewById(R.id.torrent_file_percent);
-        TextView speed = (TextView) convertView.findViewById(R.id.torrent_file_speed);
         TextView status = (TextView) convertView.findViewById(R.id.torrent_file_status);
 
-
-        float dSpeed=user.getSpeed();
-
-        if(dSpeed<0){
-            speed.setVisibility(View.GONE);
-        }else{
-            speed.setVisibility(View.VISIBLE);
-            String txt=String.format("%s/s",readableFileSize((long)dSpeed));
-            speed.setText(txt);
-        }
 
         float dPercent=user.getPercent();
 
@@ -67,8 +66,8 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
             percent.setVisibility(View.GONE);
         }else{
             percent.setVisibility(View.VISIBLE);
-            String txt= new DecimalFormat("#,##0.#").format(dPercent)+"%";
-            speed.setText(txt);
+            String txt=readablePercent(dPercent);
+            percent.setText(txt);
         }
 
         name.setText(user.getFileName());
@@ -126,6 +125,11 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
+    public static String readablePercent(float percent) {
+        String txt= new DecimalFormat("#,##0.#").format(percent*100)+"%";
+        return txt;
+    }
+
 
     public void onStreamProgress(Torrent torrent, StreamStatus status) {
         Log.d(TORRENT, "Progress: " + status.progress+" speed:"+readableFileSize((long) status.downloadSpeed)+"/s");
@@ -133,5 +137,7 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
     }
 
 
-
+    public void updateTaskUI(TorrentTaskFile task) {
+        context.updateTaskUI(task);
+    }
 }

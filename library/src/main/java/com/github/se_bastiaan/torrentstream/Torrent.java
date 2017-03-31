@@ -14,6 +14,9 @@ import com.frostwire.jlibtorrent.alerts.PieceFinishedAlert;
 import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +79,15 @@ public class Torrent implements AlertListener {
         }
     }
 
+    public InputStream getVideoStream(int i) throws FileNotFoundException {
+        TorrentFileInfo fileInfo=fileList.get(i);
+        File file = fileInfo.getFile();
+        TorrentInputStream inputStream = new TorrentInputStream(fileInfo,torrentHandle, new FileInputStream(file));
+        torrentStreamReferences.add(new WeakReference<>(inputStream));
+
+        return inputStream;
+    }
+
     private void initFileInfos(TorrentHandle torrentHandle, Long prepareSize) {
         fileList=new ArrayList<>();
         TorrentInfo torrentInfo= torrentHandle.torrentFile();
@@ -98,6 +110,8 @@ public class Torrent implements AlertListener {
             info.setSize(size);
             info.setDownloadMap(downloadMap);
             info.setPriority(Priority.IGNORE);
+            String saveFolder= torrentHandle.savePath();
+            info.setSaveFolder(saveFolder);
 
 
             int pieceCount = lastPiece - firstPiece + 1;
@@ -123,14 +137,21 @@ public class Torrent implements AlertListener {
 
     private void finishPiece(TorrentHandle torrentHandle, TorrentListener listener, int pieceIndex){
         for (TorrentFileInfo info : fileList) {
-            info.finishPiece(this,torrentHandle,listener,pieceIndex);
+           boolean r= info.finishPiece(this,torrentHandle,listener,pieceIndex);
+            if(r){
+                sendStreamProgress(info.getIndex());
+            }
         }
     }
 
 
+    public TorrentFileInfo getFileInfo(int i){
+        return fileList.get(i);
+    }
 
 
-    public double progress(){
+
+    public float progress(){
         int total=0,finish=0;
         for (TorrentFileInfo info : fileList) {
             if(info.needDownload()){
@@ -139,9 +160,9 @@ public class Torrent implements AlertListener {
             }
         }
         if(total==0){
-            return 0d;
+            return 0f;
         }else {
-            return 1.0*finish/total;
+            return 1.0f*finish/total;
         }
     }
 

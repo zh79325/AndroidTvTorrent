@@ -20,6 +20,11 @@ class TorrentInputStream extends FilterInputStream implements AlertListener {
 
         this.torrentHandle = torrentHandle;
         this.fileInfo=fileInfo;
+
+    }
+
+    public long fileSize(){
+        return fileInfo.getSize();
     }
 
     @Override

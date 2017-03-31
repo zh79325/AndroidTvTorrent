@@ -12,6 +12,7 @@ import com.frostwire.jlibtorrent.alerts.PeerDisconnectedAlert;
 import com.frostwire.jlibtorrent.alerts.SessionStatsAlert;
 import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
+import com.github.se_bastiaan.torrentstream.TorrentFileInfo;
 import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
 import com.github.se_bastiaan.torrentstream.utils.ThreadUtils;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
@@ -24,18 +25,25 @@ import com.raizlabs.android.dbflow.sql.language.SQLite;
 public class DownloadTorrentListener implements TorrentListener {
 
     TorrentAdaptor adaptor;
+    TorrentTaskFile task;
 
-    public DownloadTorrentListener(TorrentAdaptor adaptor) {
+
+    public DownloadTorrentListener(TorrentAdaptor adaptor, TorrentTaskFile task) {
         this.adaptor = adaptor;
+        this.task=task;
     }
 
     @Override
     public void onStreamPrepared(Torrent torrent, int index) {
-        notifyAdaptor();
+        notifyAdaptor(torrent, index);
         torrent.startDownload();
     }
 
-    void notifyAdaptor(){
+    void notifyAdaptor(Torrent torrent, int index){
+        TorrentFileInfo info=torrent.getFileInfo(index);
+        TorrentTaskFile fileInfo= adaptor.getItem(index);
+        fileInfo.setPercent(info.progress());
+        updateDataBase(fileInfo);
         ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -46,43 +54,37 @@ public class DownloadTorrentListener implements TorrentListener {
 
     @Override
     public void onStreamStarted(Torrent torrent, int index) {
-        TorrentTaskFile fileInfo= adaptor.getItem(index);
-        fileInfo.setPercent(0);
-        updateDataBase(fileInfo);
-        notifyAdaptor();
+        notifyAdaptor(torrent,index);
     }
 
     @Override
     public void onStreamError(Torrent torrent, Exception e) {
-        notifyAdaptor();
     }
 
     @Override
     public void onStreamReady(Torrent torrent,int index) {
         TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setStreamReady(true);
-        updateDataBase(fileInfo);
-        notifyAdaptor();
+        notifyAdaptor(torrent, index);
     }
 
     @Override
     public void onStreamProgress(Torrent torrent, StreamStatus status,int index) {
-        TorrentTaskFile fileInfo= adaptor.getItem(index);
-        fileInfo.setPercent(status.progress);
-        fileInfo.setSpeed(status.downloadSpeed);
-        updateDataBase(fileInfo);
-        notifyAdaptor();
+        task.setPercent(torrent.progress());
+        task.setSpeed(status.downloadSpeed);
+        adaptor.updateTaskUI(task);
+        notifyAdaptor(torrent, index);
     }
 
     private void updateDataBase(TorrentTaskFile fileInfo) {
         SQLite.update(TorrentTaskFile.class)
                 .set(
                         TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()),
-                        TorrentTaskFile_Table.speed.eq(fileInfo.getSpeed()),
                         TorrentTaskFile_Table.streamReady.eq(fileInfo.isStreamReady()),
                         TorrentTaskFile_Table.finished.eq(fileInfo.isFinished())
                 )
                 .where(TorrentTaskFile_Table.id.eq(fileInfo.getId()))
+                .async()
                 .execute();
     }
 
@@ -92,11 +94,10 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     @Override
-    public void onDownloadFinish(Torrent torrentExtend, int index) {
+    public void onDownloadFinish(Torrent torrent, int index) {
         TorrentTaskFile fileInfo= adaptor.getItem(index);
         fileInfo.setFinished(true);
-        updateDataBase(fileInfo);
-        notifyAdaptor();
+        notifyAdaptor(torrent, index);
     }
 
     @Override

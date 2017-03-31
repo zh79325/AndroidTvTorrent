@@ -4,6 +4,7 @@ import com.frostwire.jlibtorrent.Priority;
 import com.frostwire.jlibtorrent.TorrentHandle;
 import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.Set;
 
 public class TorrentFileInfo {
 
+    private String saveFolder;
+
     public boolean hasBytes(TorrentHandle torrentHandle, long offset) {
         int pieceIndex = (int) (offset / torrentHandle.torrentFile().pieceLength());
         pieceIndex+=firstPiece;
@@ -24,6 +27,18 @@ public class TorrentFileInfo {
         }else{
             return false;
         }
+    }
+
+    public File getFile() {
+        return new File(saveFolder,fileName);
+    }
+
+    public void setSaveFolder(String saveFolder) {
+        this.saveFolder = saveFolder;
+    }
+
+    public String getSaveFolder() {
+        return saveFolder;
     }
 
     public enum State {UNKNOWN,WAITING, STARTING, STREAMING}
@@ -42,7 +57,8 @@ public class TorrentFileInfo {
 
 
     private Set<Integer> preparePieces;
-
+    private Set<Integer> nextSevens=new HashSet<>();
+    int maxNextSevenSize=0;
 
     public State getState() {
         return state;
@@ -64,6 +80,7 @@ public class TorrentFileInfo {
         for (int i = 0; i < prepareSize; i++) {
             preparePieces.add(firstPiece + i);
         }
+        maxNextSevenSize=preparePieces.size();
     }
 
     public void start(Torrent torrent, TorrentHandle torrentHandle, TorrentListener listener){
@@ -166,7 +183,11 @@ public class TorrentFileInfo {
         this.downloadMap = downloadMap;
     }
 
-    public void finishPiece(Torrent torrentExtend, TorrentHandle torrentHandle, TorrentListener listener, int pieceIndex){
+    public boolean finishPiece(Torrent torrentExtend, TorrentHandle torrentHandle, TorrentListener listener, int pieceIndex){
+        if(pieceIndex<firstPiece||pieceIndex>lastPiece){
+            return false;
+        }
+
         Iterator<Integer> iterator= preparePieces.iterator();
         while (iterator.hasNext()){
             Integer piece =iterator.next();
@@ -191,28 +212,40 @@ public class TorrentFileInfo {
         if(finishNum==downloadMap.size()){
             listener.onDownloadFinish(torrentExtend,index);
         }
+        return true;
     }
 
     boolean isStreamReady(){
         return  state==State.STREAMING;
     }
     public int nextPiece(int pieceIndex){
+        if(nextSevens.contains(pieceIndex)){
+            nextSevens.remove(pieceIndex);
+        }
         if(pieceIndex<firstPiece||pieceIndex>lastPiece){
             return -1;
         }
+        if(nextSevens.size()>=maxNextSevenSize){
+            return -1;
+        }
+
         for (int i = firstPiece; i <= lastPiece; i++) {
             if(!Boolean.TRUE.equals(downloadMap.get(i))){
+                if(nextSevens.contains(i)){
+                    continue;
+                }
+                nextSevens.add(i);
                 return i;
             }
         }
         return -1;
     }
 
-    public double progress(){
+    public float progress(){
         if(downloadMap.size()==0){
-            return 0d;
+            return 0f;
         }
-        return 1.0*finishNum/downloadMap.size();
+        return 1.0f*finishNum/downloadMap.size();
     }
 
     public int pieceNum(){

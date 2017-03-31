@@ -122,4 +122,5 @@ public class TorrentTaskFile extends BaseModel {
     public void setTorrentId(long torrentId) {
         this.torrentId = torrentId;
     }
+
 }
