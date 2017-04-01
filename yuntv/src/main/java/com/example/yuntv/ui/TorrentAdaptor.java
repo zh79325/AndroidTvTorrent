@@ -31,11 +31,7 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
 
     private static final String TORRENT = "Torrent";
 
-    TorrentClickListener listener;
 
-    public void setListener(TorrentClickListener listener) {
-        this.listener = listener;
-    }
 
     TorrentDetailActivity context;
     public TorrentAdaptor(TorrentDetailActivity context, int resource, List<TorrentTaskFile> objects) {

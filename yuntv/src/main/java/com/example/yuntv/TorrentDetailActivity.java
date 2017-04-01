@@ -38,7 +38,6 @@ import com.example.tvcommon.db.model.TorrentTask_Table;
 import com.example.tvcommon.tool.FolderUtil;
 import com.example.tvcommon.tool.Md5Util;
 import com.example.yuntv.ui.TorrentAdaptor;
-import com.example.yuntv.ui.TorrentClickListener;
 import com.frostwire.jlibtorrent.FileStorage;
 import com.frostwire.jlibtorrent.TorrentInfo;
 import com.github.se_bastiaan.torrentstream.Torrent;
@@ -307,13 +306,6 @@ public class TorrentDetailActivity extends Activity {
         });
         adaptor=new TorrentAdaptor(this,R.layout.torrent_file,new ArrayList<TorrentTaskFile>());
 
-        adaptor.setListener(new TorrentClickListener() {
-            @Override
-            public void torrentClicked(EventType type, TorrentTaskFile fileInfo) {
-                fileInfo.setSpeed(10000);
-                adaptor.notifyDataSetChanged();
-            }
-        });
         ListView listView = (ListView) findViewById(R.id.torrent_file_list);
         listView.setAdapter(adaptor);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
