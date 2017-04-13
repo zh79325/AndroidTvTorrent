@@ -190,7 +190,7 @@ public class TorrentSearchUtil {
                         String href=element.attr("href");
                         String target=element.attr("target");
                         if(!StringUtils.isEmpty(href)&&!StringUtils.isEmpty(target)){
-                            downloadLink.setUrl(href);
+                            downloadLink.setUrl(server+href);
                             if(!href.contains("attach-download")){
                                 parseRealLink(executorService, link,downloadLink,listener);
                             }

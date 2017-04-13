@@ -113,8 +113,8 @@ public class DownloadTorrentListener implements TorrentListener {
                 sessionStatus((SessionStatsAlert)alert);
                 break;
         }
-        String txt= String.format("%s => what:%s msg:%s",alert.type(),alert.what(),alert.message());
-        Log.d("TorrentAlert", txt);
+//        String txt= String.format("%s => what:%s msg:%s",alert.type(),alert.what(),alert.message());
+//        Log.d("TorrentAlert", txt);
     }
 
     private void sessionStatus(SessionStatsAlert alert) {
