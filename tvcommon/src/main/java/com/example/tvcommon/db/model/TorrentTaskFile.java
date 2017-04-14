@@ -25,8 +25,6 @@ public class TorrentTaskFile extends BaseModel {
     @Column
     float percent;
     @Column
-    float speed;
-    @Column
     boolean finished;
     @Column
     boolean streamReady;
@@ -43,7 +41,6 @@ public class TorrentTaskFile extends BaseModel {
 
     public TorrentTaskFile() {
         percent=-1;
-        speed=-1;
         finished=false;
         streamReady=false;
         fileIndex=-1;
@@ -80,14 +77,6 @@ public class TorrentTaskFile extends BaseModel {
 
     public void setPercent(float percent) {
         this.percent = percent;
-    }
-
-    public float getSpeed() {
-        return speed;
-    }
-
-    public void setSpeed(float speed) {
-        this.speed = speed;
     }
 
     public boolean isFinished() {

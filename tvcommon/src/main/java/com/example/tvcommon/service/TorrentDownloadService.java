@@ -1,26 +1,41 @@
 package com.example.tvcommon.service;
 
 import android.app.IntentService;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
+
+import com.example.tvcommon.DownloadTorrentListener;
+import com.example.tvcommon.TorrentInfoUtil;
+import com.example.tvcommon.db.model.TorrentTask;
+import com.example.tvcommon.db.model.TorrentTaskFile;
+import com.example.tvcommon.db.model.TorrentTaskFile_Table;
+import com.example.tvcommon.db.model.TorrentTask_Table;
+import com.frostwire.jlibtorrent.TorrentInfo;
+import com.github.se_bastiaan.torrentstream.TorrentOptions;
+import com.github.se_bastiaan.torrentstream.TorrentStream;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
+
+import java.io.IOException;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
  * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
 public class TorrentDownloadService extends IntentService {
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.tvcommon.service.action.FOO";
-    private static final String ACTION_BAZ = "com.example.tvcommon.service.action.BAZ";
+    private static final String ACTION_DOWNLOAD = "com.example.tvcommon.service.action.FOO";
+    private static final String ACTION_PAUSE = "com.example.tvcommon.service.action.BAZ";
 
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.tvcommon.service.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.tvcommon.service.extra.PARAM2";
+    public static final String DOWNLOAD_TORRENT_INDEX = "com.example.tvcommon.service.extra.PARAM1";
+    public static final String DOWNLOAD_TORRENT_FILE_INDEX = "com.example.tvcommon.service.extra.PARAM2";
 
+    public static final long ALL_FILES=-1;
+
+    public static final String BROADCAST_TORRENT_UPDATE =
+            "com.example.tvcommon.service.action.BROADCAST.TORRENT_UPDATE";
+    public static final String BROADCAST_TORRENT_FILE_UPDATE =
+            "com.example.tvcommon.service.action.BROADCAST.TORRENT_FILE_UPDATE";
     public TorrentDownloadService() {
         super("TorrentDownloadService");
     }
@@ -31,61 +46,117 @@ public class TorrentDownloadService extends IntentService {
      *
      * @see IntentService
      */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
+    public static void startDownload(Context context, long taskId, long taskFileId) {
         Intent intent = new Intent(context, TorrentDownloadService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
+        intent.setAction(ACTION_DOWNLOAD);
+        intent.putExtra(DOWNLOAD_TORRENT_INDEX, taskId);
+        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, taskFileId);
         context.startService(intent);
     }
 
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
+    public static void pauseDownload(Context context, long taskId, long taskFileId) {
         Intent intent = new Intent(context, TorrentDownloadService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
+        intent.setAction(ACTION_PAUSE);
+        intent.putExtra(DOWNLOAD_TORRENT_INDEX, taskId);
+        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, taskFileId);
         context.startService(intent);
     }
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionFoo(param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
+            if (ACTION_DOWNLOAD.equals(action)) {
+                final long taskId = intent.getLongExtra(DOWNLOAD_TORRENT_INDEX,ALL_FILES);
+                final long taskFileId = intent.getLongExtra(DOWNLOAD_TORRENT_FILE_INDEX,ALL_FILES);
+                handleDownload(taskId, taskFileId);
+            } else if (ACTION_PAUSE.equals(action)) {
+                final long taskId = intent.getLongExtra(DOWNLOAD_TORRENT_INDEX,ALL_FILES);
+                final long taskFileId = intent.getLongExtra(DOWNLOAD_TORRENT_FILE_INDEX,ALL_FILES);
+                handlePause(taskId, taskFileId);
             }
         }
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
+    static TorrentStream torrentStream;;
+    static TorrentInfo torrentInfo;
+    static  TorrentTask task;
+    TorrentTask getTask(long taskId){
+        return SQLite.select()
+                .from(TorrentTask.class)
+                .where(TorrentTask_Table.id.eq(taskId)).querySingle();
+    }
+    TorrentTaskFile getTaskFile(long fileId){
+        return SQLite.select()
+                .from(TorrentTaskFile.class)
+                .where(TorrentTaskFile_Table.id.eq(fileId)).querySingle();
+    }
+    private void handlePause(long taskId, long taskFileId) {
+        try {
+            if(task==null||task.getId()!=taskId){
+                return;
+            }
+
+            if(taskFileId==ALL_FILES){
+                torrentStream.stopStream();
+            }else{
+                TorrentTaskFile file=getTaskFile(taskFileId);
+                if(file==null){
+                    return;
+                }
+                torrentStream.pauseDwonload(file.getFileIndex());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
+    private void handleDownload(long taskId, long taskFileId) {
+        try {
+            if(task==null){
+                initTaskAndStart(taskId,taskFileId);
+                return;
+            }else if(task.getId()==taskId){
+                TorrentTaskFile taskFile=getTaskFile(taskFileId);
+                if(taskFile!=null){
+                    torrentStream.startStream(torrentInfo,taskFile.getFileIndex());
+                }
+            }else{
+                torrentStream.stopStream();
+                initTaskAndStart(taskId,taskFileId);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+    private void initTaskAndStart(long taskId, long taskFileId) throws IOException, InterruptedException {
+        task=getTask(taskId);
+        if(task==null){
+            return;
+        }
+        torrentInfo=  TorrentInfoUtil.getTorrentInfo(task.getTorrentFile().getAbsolutePath());
+        TorrentOptions torrentOptions = new TorrentOptions.Builder()
+                .saveLocation(task.getFileStoreFolder())
+                .removeFilesAfterStop(false)
+                .build();
+
+        DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(this,task);
+        torrentStream = TorrentStream.init(torrentOptions);
+        torrentStream.addListener(downloadTorrentListener);
+        if(taskFileId==ALL_FILES){
+            torrentStream.startStream(torrentInfo,0);
+        }else{
+            TorrentTaskFile taskFile=getTaskFile(taskFileId);
+            if(taskFile!=null){
+                torrentStream.startStream(torrentInfo,taskFile.getFileIndex());
+            }
+        }
+
+
+    }
+
+
 }

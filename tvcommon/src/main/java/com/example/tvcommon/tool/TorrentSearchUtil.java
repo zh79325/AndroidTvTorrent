@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -141,7 +139,6 @@ public class TorrentSearchUtil {
                 Document doc = Jsoup.parse(content);
                 Elements lists=  doc.select("div.attachlist table a");
                 Set<TorrentDownloadLink> downloads=new HashSet<TorrentDownloadLink>();
-                ExecutorService executorService= Executors.newFixedThreadPool(2);
                 for (int i = 0; i < lists.size(); i++) {
                     Element e=lists.get(i);
                     Elements img=e.select("img");
@@ -153,7 +150,7 @@ public class TorrentSearchUtil {
                         downloadLink.setUrl(url);
                         downloadLink.setResourceName(link.getName());
                         link.setId(i);
-                        parseRealLink(executorService,link,downloadLink,listener);
+                        parseRealLink(link,downloadLink,listener);
                         downloads.add(downloadLink);
                     }
                 }
@@ -169,54 +166,49 @@ public class TorrentSearchUtil {
 
     }
 
-    private static void parseRealLink(final ExecutorService executorService, final TorrentLink link, final TorrentDownloadLink downloadLink, final SearchFinishListener listener) throws IOException {
+    private static void parseRealLink(final TorrentLink link, final TorrentDownloadLink downloadLink, final SearchFinishListener listener) throws IOException {
 
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    String url=downloadLink.getUrl();
-                    OkHttpClient client = getClient();
-                    Request request = new Request.Builder()
-                            .url(url)
-                            .build();
-                    Response response =  client.newCall(request).execute();
-                    String content = response.body().string();
-                    downloadLink.setProcessing(false);
-                    Document doc = Jsoup.parse(content);
-                    Elements elements=  doc.select("dd a");
-                    for (int i = 0; i < elements.size(); i++) {
-                        Element element=  elements.get(i);
-                        String href=element.attr("href");
-                        String target=element.attr("target");
-                        if(!StringUtils.isEmpty(href)&&!StringUtils.isEmpty(target)){
-                            downloadLink.setUrl(server+href);
-                            if(!href.contains("attach-download")){
-                                parseRealLink(executorService, link,downloadLink,listener);
-                            }
-                        }
-                    }
-                    checkFinish(link,listener);
-                }catch (Exception ex){
-                    int time= downloadLink.getParseTime();
-                    if(time>1){
-                        if(listener!=null){
-                            listener.parsed(link);
-                        }
-                        downloadLink.setProcessing(false);
-                        checkFinish(link,listener);
-                    }else{
-                        time++;
-                        downloadLink.setParseTime(time);
-                        try {
-                            parseRealLink(executorService, link,downloadLink,listener);
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+        try{
+            String url=downloadLink.getUrl();
+            OkHttpClient client = getClient();
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            Response response =  client.newCall(request).execute();
+            String content = response.body().string();
+            downloadLink.setProcessing(false);
+            Document doc = Jsoup.parse(content);
+            Elements elements=  doc.select("dd a");
+            for (int i = 0; i < elements.size(); i++) {
+                Element element=  elements.get(i);
+                String href=element.attr("href");
+                String target=element.attr("target");
+                if(!StringUtils.isEmpty(href)&&!StringUtils.isEmpty(target)){
+                    downloadLink.setUrl(server+href);
+                    if(!href.contains("attach-download")){
+                        parseRealLink(link,downloadLink,listener);
                     }
                 }
             }
-        });
+            checkFinish(link,listener);
+        }catch (Exception ex){
+            int time= downloadLink.getParseTime();
+            if(time>1){
+                if(listener!=null){
+                    listener.parsed(link);
+                }
+                downloadLink.setProcessing(false);
+                checkFinish(link,listener);
+            }else{
+                time++;
+                downloadLink.setParseTime(time);
+                try {
+                    parseRealLink(link,downloadLink,listener);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
 
 
 

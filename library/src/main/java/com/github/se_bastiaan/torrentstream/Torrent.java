@@ -199,6 +199,7 @@ public class Torrent implements AlertListener {
             }
         }
         maxFile.setPriority(Priority.NORMAL);
+        torrentHandle.setFilePriority(maxFile.getIndex(),Priority.NORMAL);
     }
 
     /**
@@ -239,6 +240,16 @@ public class Torrent implements AlertListener {
                 info.setPriority(Priority.NORMAL);
                 info.start(this, torrentHandle, listener);
                 this.listener.onStreamPrepared(this, i);
+                break;
+            }
+        }
+    }
+
+    public void stopDownloadFile(int i){
+        for (TorrentFileInfo info : fileList) {
+            if(!info.needDownload()&&info.getIndex()==i){
+                info.setPriority(Priority.IGNORE);
+                info.stop( torrentHandle);
                 break;
             }
         }
@@ -328,5 +339,9 @@ public class Torrent implements AlertListener {
 
     public File getSaveLocation() {
         return new File(torrentHandle.savePath() + "/" + torrentHandle.name());
+    }
+
+    public float progress(int index) {
+        return getFileInfo(index).progress();
     }
 }

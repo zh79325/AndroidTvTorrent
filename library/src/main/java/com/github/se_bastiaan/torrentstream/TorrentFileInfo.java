@@ -41,6 +41,12 @@ public class TorrentFileInfo {
         return saveFolder;
     }
 
+    public void stop(TorrentHandle torrentHandle ) {
+        for (int i = firstPiece; i <= lastPiece; i++) {
+            torrentHandle.piecePriority(i,Priority.IGNORE);
+        }
+    }
+
     public enum State {UNKNOWN,WAITING, STARTING, STREAMING}
     private State state = State.WAITING;
 
@@ -84,6 +90,7 @@ public class TorrentFileInfo {
     }
 
     public void start(Torrent torrent, TorrentHandle torrentHandle, TorrentListener listener){
+        torrentHandle.setFilePriority(index,Priority.NORMAL);
         prepare();
         for (int i = firstPiece; i <= lastPiece; i++) {
             torrentHandle.piecePriority(i,Priority.NORMAL);

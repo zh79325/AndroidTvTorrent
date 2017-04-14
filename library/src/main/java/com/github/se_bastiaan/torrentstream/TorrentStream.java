@@ -541,7 +541,6 @@ public  class TorrentStream {
                 }
 //                torrentSession.removeListener(torrentAddedAlertListener);
                 torrentSession.addListener(torrentAddedAlertListener);
-
                 if (torrentInfo == null) {
                     for (final TorrentListener listener : listeners) {
                         ThreadUtils.runOnUiThread(new Runnable() {
@@ -567,6 +566,13 @@ public  class TorrentStream {
                 torrentSession.download(torrentInfo, saveDirectory, null, priorities, null);
             }
         });
+    }
+
+    public void pauseDwonload(int index) {
+        if(currentTorrent!=null){
+            currentTorrent.stopDownloadFile(index);
+            return;
+        }
     }
 
     protected class InternalTorrentListener implements TorrentListener {

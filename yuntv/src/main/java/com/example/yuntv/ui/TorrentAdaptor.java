@@ -1,7 +1,5 @@
 package com.example.yuntv.ui;
 
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.tvcommon.db.model.TorrentTask;
 import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.yuntv.R;
 import com.example.yuntv.TorrentDetailActivity;
@@ -25,24 +24,23 @@ import java.util.List;
 
 public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
 
-    private HandlerThread torrentThread;
-    private Handler torrentHandler;
 
 
     private static final String TORRENT = "Torrent";
 
 
-
     TorrentDetailActivity context;
+    private long taskId;
+
     public TorrentAdaptor(TorrentDetailActivity context, int resource, List<TorrentTaskFile> objects) {
         super(context, resource, objects);
         this.context=context;
 
-        torrentThread = new HandlerThread("Torrent Adaptor Thread");
-        torrentThread.start();
-        torrentHandler=new Handler(torrentThread.getLooper());
     }
 
+    public void setTaskId(long taskId) {
+        this.taskId = taskId;
+    }
 
     @NonNull
     @Override
@@ -86,28 +84,6 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         String txt=String.format("%s/%s(点击选择操作)",dText,pText);
         status.setText(txt);
 
-        View.OnClickListener clickListener=new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                switch (v.getId()){
-//                    case R.id.download_torrent_file:
-//                        int downloading=user.getDownloading();
-//                        if(downloading<=0){
-//                            user.setDownloading(1);
-//                            listener.torrentClicked(TorrentClickListener.EventType.Download,user);
-//                        }else{
-//                            user.setDownloading(0);
-//                            listener.torrentClicked(TorrentClickListener.EventType.Pause,user);
-//                        }
-//
-//                        break;
-//                    case R.id.play_torrent_file:
-//                        listener.torrentClicked(TorrentClickListener.EventType.Play,user);
-//                        break;
-//                }
-            }
-        };
-
         return convertView;
 
     }
@@ -133,7 +109,26 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
     }
 
 
-    public void updateTaskUI(TorrentTaskFile task) {
+    public void updateTaskUI(TorrentTask task) {
         context.updateTaskUI(task);
     }
+
+    public void updateTaskFile(TorrentTaskFile taskFile) {
+        for (int i = 0; i < this.getCount(); i++) {
+            TorrentTaskFile file=getItem(i);
+            if(file.getId()==taskFile.getId()){
+                this.remove(file);
+                this.insert(taskFile,i);
+                break;
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public long getTaskId() {
+        return taskId;
+    }
+
+
+
 }

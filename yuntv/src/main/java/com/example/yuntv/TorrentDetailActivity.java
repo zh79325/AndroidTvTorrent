@@ -18,16 +18,17 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.tvcommon.TorrentInfoUtil;
 import com.example.tvcommon.common.TorrentDownloadLink;
@@ -35,28 +36,27 @@ import com.example.tvcommon.db.model.TorrentTask;
 import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.tvcommon.db.model.TorrentTaskFile_Table;
 import com.example.tvcommon.db.model.TorrentTask_Table;
+import com.example.tvcommon.service.TorrentDownloadService;
 import com.example.tvcommon.tool.FolderUtil;
 import com.example.tvcommon.tool.Md5Util;
+import com.example.yuntv.ui.DownloadStateReceiver;
 import com.example.yuntv.ui.TorrentAdaptor;
 import com.frostwire.jlibtorrent.FileStorage;
 import com.frostwire.jlibtorrent.TorrentInfo;
-import com.github.se_bastiaan.torrentstream.Torrent;
-import com.github.se_bastiaan.torrentstream.TorrentOptions;
-import com.github.se_bastiaan.torrentstream.TorrentStream;
 import com.github.se_bastiaan.torrentstream.utils.ThreadUtils;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import static com.example.yuntv.R.string.torrent;
 
 /*
  * MainActivity class that loads MainFragment
@@ -76,7 +76,6 @@ public class TorrentDetailActivity extends Activity {
     ProgressBar torrentProgress;
     Button deleteBtn;
 
-    TorrentStream  torrentStream;;
     TorrentInfo torrentInfo;
     TorrentTask task;
     Context context;
@@ -169,14 +168,22 @@ public class TorrentDetailActivity extends Activity {
                 long id=  task.insert();
                 task.setId(id);
             }else{
+                storedTask.setSpeed(0);
                 File storedTorrent=new File(storedTask.getLocalPath(),storedTask.getFileName());
                 if(storedTorrent.exists()){
+                    SQLite.update(TorrentTask.class)
+                            .set(
+                                    TorrentTask_Table.speed.eq(0)
+                            )
+                            .where(TorrentTask_Table.id.eq(storedTask.getId()))
+                            .execute();
                     task= storedTask;
                 }else{
                     SQLite.update(TorrentTask.class)
                             .set(
                                     TorrentTask_Table.fileName.eq(task.getFileName()),
                                     TorrentTask_Table.hash.eq(task.getHash()),
+                                    TorrentTask_Table.speed.eq(0),
                                     TorrentTask_Table.localPath.eq(task.getLocalPath())
                             )
                             .where(TorrentTask_Table.id.eq(storedTask.getId()))
@@ -245,12 +252,46 @@ public class TorrentDetailActivity extends Activity {
                 @Override
                 public void run() {
                     adaptor.clear();
+                    adaptor.setTaskId(task.getId());
                     adaptor.addAll(adaptorFiles);
                     deleteBtn.setVisibility(View.VISIBLE);
                 }
             });
 
 
+        }
+    };
+
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            torrentHandler.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    new AlertDialog.Builder(TorrentDetailActivity.this)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setTitle("删除种子及文件")
+                            .setMessage("是否确认删除种子及全部文件?")
+                            .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (task.getFileStoreFolder() != null) {
+                                        File f = new File(task.getFileStoreFolder());
+                                        if (f.exists()) {
+                                            f.delete();
+                                        }
+                                    }
+                                    task.delete();
+
+                                }
+
+                            })
+                            .setNegativeButton("否", null)
+                            .show();
+
+                }
+            });
         }
     };
     @Override
@@ -268,42 +309,8 @@ public class TorrentDetailActivity extends Activity {
         torrentProgress=(ProgressBar)findViewById(R.id.torrent_process_progress);
         deleteBtn=(Button)findViewById(R.id.delete_torrent);
         deleteBtn.setVisibility(View.GONE);
-        deleteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                torrentHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
 
-                        new AlertDialog.Builder(TorrentDetailActivity.this)
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .setTitle("删除种子及文件")
-                                .setMessage("是否确认删除种子及全部文件?")
-                                .setPositiveButton("是", new DialogInterface.OnClickListener()
-                                {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if(torrentStream!=null){
-                                            torrentStream.stopStream();
-                                        }
-                                        if(task.getFileStoreFolder()!=null){
-                                            File f=new File(task.getFileStoreFolder());
-                                            if(f.exists()){
-                                                f.delete();
-                                            }
-                                        }
-                                        task.delete();
-
-                                    }
-
-                                })
-                                .setNegativeButton("否", null)
-                                .show();
-
-                    }
-                });
-            }
-        });
+        deleteBtn.setOnClickListener(onClickListener);
         adaptor=new TorrentAdaptor(this,R.layout.torrent_file,new ArrayList<TorrentTaskFile>());
 
         ListView listView = (ListView) findViewById(R.id.torrent_file_list);
@@ -369,10 +376,18 @@ public class TorrentDetailActivity extends Activity {
                 builder.create().show();
 
             }});
+        IntentFilter statusIntentFilter = new IntentFilter(
+                TorrentDownloadService.BROADCAST_TORRENT_FILE_UPDATE);
 
+        DownloadStateReceiver mDownloadStateReceiver =
+                new DownloadStateReceiver(adaptor);
+        // Registers the DownloadStateReceiver and its intent filters
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mDownloadStateReceiver,
+                statusIntentFilter);
         Bundle  bundle  = getIntent().getExtras();
         if(bundle!=null){
-            link= (TorrentDownloadLink) bundle.get(getResources().getString(R.string.torrent));
+            link= (TorrentDownloadLink) bundle.get(getResources().getString(torrent));
         }
         if(link!=null){
             File f=link.storePath();
@@ -391,49 +406,18 @@ public class TorrentDetailActivity extends Activity {
     }
 
     private void playDownload(TorrentTaskFile fileInfo) {
-        Torrent torrent=torrentStream.getCurrentTorrent();
-        try {
-            InputStream is=torrent.getVideoStream(fileInfo.getFileIndex());
-//            IjkVideoView mVideoView = (IjkVideoView) findViewById(R.id.video_view);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Toast.makeText(context,"Failed "+e.getMessage(),Toast.LENGTH_LONG).show();
-        }
 
     }
 
     private void pauseDownload(TorrentTaskFile fileInfo) {
-        TorrentStream stream=getStream(fileInfo);
-        stream.stopStream();
+        TorrentDownloadService.pauseDownload(this,fileInfo.getTorrentId(),fileInfo.getId());
     }
 
     private void startDownload(TorrentTaskFile fileInfo) {
-        TorrentStream stream=getStream(fileInfo);
-        if(stream!=null){
-            stream.startStream(torrentInfo,fileInfo.getFileIndex());
-        }
-    }
-    TorrentStream getStream(final TorrentTaskFile fileInfo){
-        if(torrentStream==null){
-            torrentHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    TorrentOptions torrentOptions = new TorrentOptions.Builder()
-                            .saveLocation(fileInfo.getStoreFolder())
-                            .removeFilesAfterStop(false)
-                            .build();
-                    DownloadTorrentListener downloadTorrentListener=new DownloadTorrentListener(adaptor,fileInfo);
-                    torrentStream = TorrentStream.init(torrentOptions);
-                    torrentStream.addListener(downloadTorrentListener);
-                    torrentStream.startStream(torrentInfo,fileInfo.getFileIndex());
-                }
-            });
-
-        }
-        return torrentStream;
+        TorrentDownloadService.startDownload(this,fileInfo.getTorrentId(),fileInfo.getId());
     }
 
-    public void updateTaskUI(TorrentTaskFile task) {
+    public void updateTaskUI(TorrentTask task) {
         updateStatus(true,String.format("%s  %s/s",TorrentAdaptor.readablePercent(task.getPercent()),TorrentAdaptor.readableFileSize((long) task.getSpeed())));
     }
 }

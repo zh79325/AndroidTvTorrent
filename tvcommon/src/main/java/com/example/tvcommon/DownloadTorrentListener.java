@@ -1,10 +1,16 @@
-package com.example.yuntv;
+package com.example.tvcommon;
 
+import android.app.Service;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.example.tvcommon.db.model.TorrentTask;
 import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.tvcommon.db.model.TorrentTaskFile_Table;
-import com.example.yuntv.ui.TorrentAdaptor;
+import com.example.tvcommon.db.model.TorrentTask_Table;
+import com.example.tvcommon.service.TorrentDownloadService;
+import com.frostwire.jlibtorrent.LibTorrent;
 import com.frostwire.jlibtorrent.StatsMetric;
 import com.frostwire.jlibtorrent.alerts.Alert;
 import com.frostwire.jlibtorrent.alerts.PeerConnectAlert;
@@ -14,8 +20,12 @@ import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
 import com.github.se_bastiaan.torrentstream.TorrentFileInfo;
 import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
-import com.github.se_bastiaan.torrentstream.utils.ThreadUtils;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
+
+import java.util.List;
+
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_FILE_INDEX;
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_INDEX;
 
 
 /**
@@ -24,37 +34,40 @@ import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 public class DownloadTorrentListener implements TorrentListener {
 
-    TorrentAdaptor adaptor;
-    TorrentTaskFile task;
+    TorrentTask task;
+
+    Service service;
 
 
-    public DownloadTorrentListener(TorrentAdaptor adaptor, TorrentTaskFile task) {
-        this.adaptor = adaptor;
+    public DownloadTorrentListener( Service service, TorrentTask task) {
         this.task=task;
+        this.service=service;
+        List<TorrentTaskFile> files= SQLite.select()
+                .from(TorrentTaskFile.class)
+                .where(TorrentTaskFile_Table.torrentId.eq(task.getId())).queryList();
+        task.setFileList(files);
     }
 
     @Override
     public void onStreamPrepared(Torrent torrent, int index) {
-        notifyAdaptor(torrent, index);
+        notifyAdaptor(torrent, task.getTaskFile(index));
         torrent.startDownload();
     }
 
-    void notifyAdaptor(Torrent torrent, int index){
-        TorrentFileInfo info=torrent.getFileInfo(index);
-        TorrentTaskFile fileInfo= adaptor.getItem(index);
+    void notifyAdaptor(Torrent torrent, TorrentTaskFile fileInfo){
+        TorrentFileInfo info=torrent.getFileInfo(fileInfo.getFileIndex());
         fileInfo.setPercent(info.progress());
         updateDataBase(fileInfo);
-        ThreadUtils.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adaptor.notifyDataSetChanged();
-            }
-        });
+        Intent intent =
+                new Intent(TorrentDownloadService.BROADCAST_TORRENT_FILE_UPDATE);
+        intent.putExtra(DOWNLOAD_TORRENT_INDEX, fileInfo.getTorrentId());
+        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, fileInfo.getId());
+        LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
     }
 
     @Override
     public void onStreamStarted(Torrent torrent, int index) {
-        notifyAdaptor(torrent,index);
+        notifyAdaptor(torrent,task.getTaskFile(index));
     }
 
     @Override
@@ -63,17 +76,18 @@ public class DownloadTorrentListener implements TorrentListener {
 
     @Override
     public void onStreamReady(Torrent torrent,int index) {
-        TorrentTaskFile fileInfo= adaptor.getItem(index);
+        TorrentTaskFile fileInfo=task.getTaskFile(index);;
         fileInfo.setStreamReady(true);
-        notifyAdaptor(torrent, index);
+        notifyAdaptor(torrent, fileInfo);
     }
 
     @Override
     public void onStreamProgress(Torrent torrent, StreamStatus status,int index) {
-        task.setPercent(torrent.progress());
+        TorrentTaskFile taskFile=task.getTaskFile(index);
+        taskFile.setPercent(torrent.progress(index));
         task.setSpeed(status.downloadSpeed);
-        adaptor.updateTaskUI(task);
-        notifyAdaptor(torrent, index);
+        task.setPercent(torrent.progress());
+        notifyAdaptor(torrent, taskFile);
     }
 
     private void updateDataBase(TorrentTaskFile fileInfo) {
@@ -81,9 +95,18 @@ public class DownloadTorrentListener implements TorrentListener {
                 .set(
                         TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()),
                         TorrentTaskFile_Table.streamReady.eq(fileInfo.isStreamReady()),
+                        TorrentTaskFile_Table.downloading.eq(1),
                         TorrentTaskFile_Table.finished.eq(fileInfo.isFinished())
                 )
                 .where(TorrentTaskFile_Table.id.eq(fileInfo.getId()))
+                .async()
+                .execute();
+        SQLite.update(TorrentTask.class)
+                .set(
+                        TorrentTask_Table.percent.eq(task.getPercent()),
+                        TorrentTask_Table.speed.eq(task.getSpeed())
+                )
+                .where(TorrentTask_Table.id.eq(task.getId()))
                 .async()
                 .execute();
     }
@@ -95,9 +118,9 @@ public class DownloadTorrentListener implements TorrentListener {
 
     @Override
     public void onDownloadFinish(Torrent torrent, int index) {
-        TorrentTaskFile fileInfo= adaptor.getItem(index);
+        TorrentTaskFile fileInfo= task.getTaskFile(index);;
         fileInfo.setFinished(true);
-        notifyAdaptor(torrent, index);
+        notifyAdaptor(torrent, fileInfo);
     }
 
     @Override
@@ -118,9 +141,16 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     private void sessionStatus(SessionStatsAlert alert) {
-        long  dhtNodes = alert.value(StatsMetric.DHT_NODES_GAUGE_INDEX);
-        long receiverNum=alert.value(StatsMetric.NET_RECV_IP_OVERHEAD_BYTES_COUNTER_INDEX);
-        Log.d("TorrentAlert", "NodesNum=>"+dhtNodes+"");
+        StringBuilder sb=new StringBuilder();
+        for (StatsMetric metric : LibTorrent.sessionStatsMetrics()) {
+            String name= metric.name;
+            int index=metric.valueIndex;
+            long  value = alert.value(index);
+            if(value!=0){
+                sb.append(name+"=>"+value+"\n");
+            }
+        }
+        Log.d("TorrentAlert", sb.toString());
     }
 
     private void peerDisConnected(PeerDisconnectedAlert alert) {

@@ -6,6 +6,7 @@ import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -21,16 +22,45 @@ public class TorrentTask extends BaseModel {
     String localPath;
     @Column
     String hash;
-
+    @Column
+    float speed;
+    @Column
+    float percent;
     @Column
     String fileStoreFolder;
 
     List<TorrentTaskFile> fileList;
 
+    public float getPercent() {
+        return percent;
+    }
 
+    public void setPercent(float percent) {
+        this.percent = percent;
+    }
 
     public List<TorrentTaskFile> getFileList() {
         return fileList;
+    }
+
+    public float getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(float speed) {
+        this.speed = speed;
+    }
+
+    public TorrentTaskFile getTaskFile(int index){
+        if(fileList==null){
+            return null;
+        }
+        for (TorrentTaskFile taskFile : fileList) {
+            if(taskFile.getFileIndex()==index){
+                return taskFile;
+            }
+        }
+        return null;
     }
 
     public void setFileList(List<TorrentTaskFile> fileList) {
@@ -56,7 +86,9 @@ public class TorrentTask extends BaseModel {
     public String getLocalPath() {
         return localPath;
     }
-
+    public File getTorrentFile() {
+        return new File(localPath,fileName);
+    }
     public void setLocalPath(String localPath) {
         this.localPath = localPath;
     }
