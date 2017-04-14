@@ -125,17 +125,17 @@ public class DownloadTorrentListener implements TorrentListener {
 
     @Override
     public void fireAlert(Alert<?> alert) {
-        switch (alert.type()){
-            case PEER_CONNECT:
-                peerConnected((PeerConnectAlert)alert);
-                break;
-            case PEER_DISCONNECTED:
-                peerDisConnected((PeerDisconnectedAlert)alert);
-                break;
-            case SESSION_STATS:
-                sessionStatus((SessionStatsAlert)alert);
-                break;
-        }
+//        switch (alert.type()){
+//            case PEER_CONNECT:
+//                peerConnected((PeerConnectAlert)alert);
+//                break;
+//            case PEER_DISCONNECTED:
+//                peerDisConnected((PeerDisconnectedAlert)alert);
+//                break;
+//            case SESSION_STATS:
+//                sessionStatus((SessionStatsAlert)alert);
+//                break;
+//        }
 //        String txt= String.format("%s => what:%s msg:%s",alert.type(),alert.what(),alert.message());
 //        Log.d("TorrentAlert", txt);
     }
