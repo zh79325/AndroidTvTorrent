@@ -3,6 +3,7 @@ package com.example.yuntv;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,7 +16,6 @@ import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.tvcommon.db.model.TorrentTaskFile_Table;
 import com.example.tvcommon.db.model.TorrentTask_Table;
 import com.example.tvcommon.service.TorrentDownloadService;
-import com.example.tvcommon.video.ActionBarEventListener;
 import com.example.tvcommon.video.AndroidMediaController;
 import com.example.tvcommon.video.IjkVideoView;
 import com.example.tvcommon.video.InfoHudViewHolder;
@@ -71,16 +71,16 @@ public class PlayVideoActivity extends AppCompatActivity {
 
         mMediaController = new AndroidMediaController(this, false);
         mMediaController.setSupportActionBar(actionBar);
-        mMediaController.setListener(new ActionBarEventListener() {
-            @Override
-            public void BarEvent(final boolean show) {
-                if(show){
-                    mHudView.setVisibility(View.VISIBLE);
-                }else {
-                    mHudView.setVisibility(View.GONE);
-                }
-            }
-        });
+//        mMediaController.setListener(new ActionBarEventListener() {
+//            @Override
+//            public void BarEvent(final boolean show) {
+//                if(show){
+//                    mHudView.setVisibility(View.VISIBLE);
+//                }else {
+//                    mHudView.setVisibility(View.GONE);
+//                }
+//            }
+//        });
 
 
 
@@ -103,7 +103,7 @@ public class PlayVideoActivity extends AppCompatActivity {
             final long taskId=bundle.getLong(TorrentDownloadService.DOWNLOAD_TASK_ID);
             final long fileId=bundle.getLong(TorrentDownloadService.DOWNLOAD_TASK_FILE_ID);
 
-            new Thread(new Runnable() {
+            new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     task=SQLite.select()
@@ -162,7 +162,7 @@ public class PlayVideoActivity extends AppCompatActivity {
                     });
 
                 }
-            }).start();
+            },100);
         }
 
 
