@@ -62,17 +62,29 @@ public class AndroidMediaController extends MediaController implements IMediaCon
         mActionBar = actionBar;
         if (isShowing()) {
             actionBar.show();
-            if(listener!=null){
-                listener.BarEvent(true);
-            }
+            barEvent(true);
         } else {
             actionBar.hide();
-            if(listener!=null){
-                listener.BarEvent(false);
-            }
+            barEvent(false);
         }
     }
-
+        void barEvent(final boolean show){
+            return;
+//            new Handler().postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            if(listener!=null){
+//                                listener.BarEvent(show);
+//                            }
+//                        }
+//                    });
+//
+//                }
+//            }, 100);
+        }
     @Override
     public void show() {
         super.show();
@@ -80,9 +92,7 @@ public class AndroidMediaController extends MediaController implements IMediaCon
         {
             mActionBar.show();
         }
-        if(listener!=null){
-            listener.BarEvent(true);
-        }
+        barEvent(true);
 
     }
 
@@ -94,9 +104,7 @@ public class AndroidMediaController extends MediaController implements IMediaCon
         for (View view : mShowOnceArray)
             view.setVisibility(View.GONE);
         mShowOnceArray.clear();
-        if(listener!=null){
-            listener.BarEvent(false);
-        }
+        barEvent(false);
     }
 
     //----------

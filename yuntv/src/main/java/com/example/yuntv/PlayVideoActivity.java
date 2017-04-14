@@ -73,7 +73,7 @@ public class PlayVideoActivity extends AppCompatActivity {
         mMediaController.setSupportActionBar(actionBar);
         mMediaController.setListener(new ActionBarEventListener() {
             @Override
-            public void BarEvent(boolean show) {
+            public void BarEvent(final boolean show) {
                 if(show){
                     mHudView.setVisibility(View.VISIBLE);
                 }else {
@@ -82,8 +82,11 @@ public class PlayVideoActivity extends AppCompatActivity {
             }
         });
 
+
+
         mToastTextView = (TextView) findViewById(R.id.toast_text_view);
         mHudView = (TableLayout) findViewById(R.id.hud_view);
+        mHudView.setVisibility(View.GONE);
         progressBar=(ProgressBar) findViewById(R.id.video_loading_progress);
 
 
