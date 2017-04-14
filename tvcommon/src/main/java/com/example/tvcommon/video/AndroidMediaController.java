@@ -30,6 +30,16 @@ import java.util.ArrayList;
 public class AndroidMediaController extends MediaController implements IMediaController {
     private ActionBar mActionBar;
 
+    private ActionBarEventListener listener;
+
+    public ActionBarEventListener getListener() {
+        return listener;
+    }
+
+    public void setListener(ActionBarEventListener listener) {
+        this.listener = listener;
+    }
+
     public AndroidMediaController(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView(context);
@@ -52,8 +62,14 @@ public class AndroidMediaController extends MediaController implements IMediaCon
         mActionBar = actionBar;
         if (isShowing()) {
             actionBar.show();
+            if(listener!=null){
+                listener.BarEvent(true);
+            }
         } else {
             actionBar.hide();
+            if(listener!=null){
+                listener.BarEvent(false);
+            }
         }
     }
 
@@ -61,7 +77,13 @@ public class AndroidMediaController extends MediaController implements IMediaCon
     public void show() {
         super.show();
         if (mActionBar != null)
+        {
             mActionBar.show();
+        }
+        if(listener!=null){
+            listener.BarEvent(true);
+        }
+
     }
 
     @Override
@@ -72,6 +94,9 @@ public class AndroidMediaController extends MediaController implements IMediaCon
         for (View view : mShowOnceArray)
             view.setVisibility(View.GONE);
         mShowOnceArray.clear();
+        if(listener!=null){
+            listener.BarEvent(false);
+        }
     }
 
     //----------

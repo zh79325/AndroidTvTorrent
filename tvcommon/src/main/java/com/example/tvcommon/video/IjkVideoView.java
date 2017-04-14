@@ -288,9 +288,6 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         openVideo();
         requestLayout();
         invalidate();
-        if(startPosition>0){
-            mMediaPlayer.seekTo(startPosition);
-        }
     }
 
     // REMOVED: addSubtitleSource

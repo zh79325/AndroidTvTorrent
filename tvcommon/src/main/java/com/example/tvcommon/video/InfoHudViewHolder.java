@@ -92,7 +92,7 @@ public class InfoHudViewHolder {
         }
     }
 
-    private static String formatPosition(long position){
+    public static String formatPosition(long position){
         long seconds=position/1000;
         long hour=seconds/3600;
         seconds-=hour*3600;
