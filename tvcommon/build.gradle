@@ -42,4 +42,7 @@ dependencies {
 
     compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
     compile project(':library')
+
+    compile 'tv.danmaku.ijk.media:ijkplayer-java:0.7.8.1'
+    compile 'tv.danmaku.ijk.media:ijkplayer-armv7a:0.7.8.1'
 }

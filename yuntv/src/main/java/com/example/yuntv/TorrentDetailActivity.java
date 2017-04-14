@@ -253,6 +253,11 @@ public class TorrentDetailActivity extends Activity {
                 public void run() {
                     adaptor.clear();
                     adaptor.setTaskId(task.getId());
+                    for (TorrentTaskFile taskFile : adaptorFiles) {
+                        if (taskFile.getDownloading()!=-1){
+                            taskFile.setDownloading(0);
+                        }
+                    }
                     adaptor.addAll(adaptorFiles);
                     deleteBtn.setVisibility(View.VISIBLE);
                 }
