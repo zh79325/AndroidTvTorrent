@@ -288,6 +288,9 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         openVideo();
         requestLayout();
         invalidate();
+        if(startPosition>0){
+            mMediaPlayer.seekTo(startPosition);
+        }
     }
 
     // REMOVED: addSubtitleSource
@@ -326,7 +329,6 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
         try {
             mMediaPlayer = createPlayer(mSettings.getPlayer());
-            mMediaPlayer.seekTo(startPosition);
             // TODO: create SubtitleController in MediaPlayer, but we need
             // a context for the subtitle renderers
             final Context context = getContext();

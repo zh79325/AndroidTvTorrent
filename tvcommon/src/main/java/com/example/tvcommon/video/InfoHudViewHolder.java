@@ -141,18 +141,18 @@ public class InfoHudViewHolder {
                         break;
 
                     if(playListener!=null){
-//                        playListener.infoFresh(mp);
+                        playListener.infoFresh(mp);
                     }
                     int vdec = mp.getVideoDecoder();
                     switch (vdec) {
                         case IjkMediaPlayer.FFP_PROPV_DECODER_AVCODEC:
-                            setRowValue(vdec, "avcodec");
+                            setRowValue(R.string.vdec, "avcodec");
                             break;
                         case IjkMediaPlayer.FFP_PROPV_DECODER_MEDIACODEC:
-                            setRowValue(vdec, "MediaCodec");
+                            setRowValue(R.string.vdec, "MediaCodec");
                             break;
                         default:
-                            setRowValue(vdec, "");
+                            setRowValue(R.string.vdec, "");
                             break;
                     }
 
