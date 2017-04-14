@@ -27,8 +27,8 @@ public class TorrentDownloadService extends IntentService {
     private static final String ACTION_DOWNLOAD = "com.example.tvcommon.service.action.FOO";
     private static final String ACTION_PAUSE = "com.example.tvcommon.service.action.BAZ";
 
-    public static final String DOWNLOAD_TORRENT_INDEX = "com.example.tvcommon.service.extra.PARAM1";
-    public static final String DOWNLOAD_TORRENT_FILE_INDEX = "com.example.tvcommon.service.extra.PARAM2";
+    public static final String DOWNLOAD_TASK_ID = "com.example.tvcommon.service.extra.PARAM1";
+    public static final String DOWNLOAD_TASK_FILE_ID = "com.example.tvcommon.service.extra.PARAM2";
 
     public static final long ALL_FILES=-1;
 
@@ -49,16 +49,16 @@ public class TorrentDownloadService extends IntentService {
     public static void startDownload(Context context, long taskId, long taskFileId) {
         Intent intent = new Intent(context, TorrentDownloadService.class);
         intent.setAction(ACTION_DOWNLOAD);
-        intent.putExtra(DOWNLOAD_TORRENT_INDEX, taskId);
-        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, taskFileId);
+        intent.putExtra(DOWNLOAD_TASK_ID, taskId);
+        intent.putExtra(DOWNLOAD_TASK_FILE_ID, taskFileId);
         context.startService(intent);
     }
 
     public static void pauseDownload(Context context, long taskId, long taskFileId) {
         Intent intent = new Intent(context, TorrentDownloadService.class);
         intent.setAction(ACTION_PAUSE);
-        intent.putExtra(DOWNLOAD_TORRENT_INDEX, taskId);
-        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, taskFileId);
+        intent.putExtra(DOWNLOAD_TASK_ID, taskId);
+        intent.putExtra(DOWNLOAD_TASK_FILE_ID, taskFileId);
         context.startService(intent);
     }
 
@@ -68,12 +68,12 @@ public class TorrentDownloadService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_DOWNLOAD.equals(action)) {
-                final long taskId = intent.getLongExtra(DOWNLOAD_TORRENT_INDEX,ALL_FILES);
-                final long taskFileId = intent.getLongExtra(DOWNLOAD_TORRENT_FILE_INDEX,ALL_FILES);
+                final long taskId = intent.getLongExtra(DOWNLOAD_TASK_ID,ALL_FILES);
+                final long taskFileId = intent.getLongExtra(DOWNLOAD_TASK_FILE_ID,ALL_FILES);
                 handleDownload(taskId, taskFileId);
             } else if (ACTION_PAUSE.equals(action)) {
-                final long taskId = intent.getLongExtra(DOWNLOAD_TORRENT_INDEX,ALL_FILES);
-                final long taskFileId = intent.getLongExtra(DOWNLOAD_TORRENT_FILE_INDEX,ALL_FILES);
+                final long taskId = intent.getLongExtra(DOWNLOAD_TASK_ID,ALL_FILES);
+                final long taskFileId = intent.getLongExtra(DOWNLOAD_TASK_FILE_ID,ALL_FILES);
                 handlePause(taskId, taskFileId);
             }
         }

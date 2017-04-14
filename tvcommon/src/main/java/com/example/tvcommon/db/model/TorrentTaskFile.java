@@ -6,6 +6,8 @@ import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 
+import java.io.File;
+
 /**
  * Created by zh_zhou on 2017/3/11.
  */
@@ -30,6 +32,17 @@ public class TorrentTaskFile extends BaseModel {
     boolean streamReady;
     @Column
     int downloading;
+
+    @Column
+    long playPosition;
+
+    public long getPlayPosition() {
+        return playPosition;
+    }
+
+    public void setPlayPosition(long playPosition) {
+        this.playPosition = playPosition;
+    }
 
     public int getDownloading() {
         return downloading;
@@ -57,6 +70,10 @@ public class TorrentTaskFile extends BaseModel {
 
     public String getStoreFolder() {
         return storeFolder;
+    }
+
+    public File getDownloadFile(){
+        return new File(storeFolder,fileName);
     }
 
     public void setStoreFolder(String storeFolder) {

@@ -11,8 +11,8 @@ import com.example.tvcommon.db.model.TorrentTask_Table;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import static com.example.tvcommon.service.TorrentDownloadService.ALL_FILES;
-import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_FILE_INDEX;
-import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_INDEX;
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TASK_FILE_ID;
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TASK_ID;
 
 /**
  * Created by zh_zhou on 2017/4/14.
@@ -26,8 +26,8 @@ public class DownloadStateReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        long taskId = intent.getLongExtra(DOWNLOAD_TORRENT_INDEX,ALL_FILES);
-        long taskFileId = intent.getLongExtra(DOWNLOAD_TORRENT_FILE_INDEX,ALL_FILES);
+        long taskId = intent.getLongExtra(DOWNLOAD_TASK_ID,ALL_FILES);
+        long taskFileId = intent.getLongExtra(DOWNLOAD_TASK_FILE_ID,ALL_FILES);
         TorrentTask task= SQLite.select()
                 .from(TorrentTask.class)
                 .where(TorrentTask_Table.id.eq(taskId)).querySingle();

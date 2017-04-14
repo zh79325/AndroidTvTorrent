@@ -20,8 +20,8 @@ android {
         abortOnError true
     }
 }
-ext{
-     dbflow_version = "4.0.0-beta5"
+ext {
+    dbflow_version = "4.0.0-beta5"
 }
 dependencies {
     annotationProcessor "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
@@ -35,14 +35,15 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.2.0'
-    testCompile 'junit:junit:4.12'
-    compile 'com.squareup.okhttp3:okhttp:3.6.0'
-    compile 'com.alibaba:fastjson:1.2.9'
 
     compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
     compile project(':library')
 
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.squareup.okhttp3:okhttp:3.6.0'
+    compile 'com.alibaba:fastjson:1.2.9'
     compile 'tv.danmaku.ijk.media:ijkplayer-java:0.7.8.1'
     compile 'tv.danmaku.ijk.media:ijkplayer-armv7a:0.7.8.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
 }

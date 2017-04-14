@@ -24,8 +24,8 @@ import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.util.List;
 
-import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_FILE_INDEX;
-import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TORRENT_INDEX;
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TASK_FILE_ID;
+import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TASK_ID;
 
 
 /**
@@ -60,8 +60,8 @@ public class DownloadTorrentListener implements TorrentListener {
         updateDataBase(fileInfo);
         Intent intent =
                 new Intent(TorrentDownloadService.BROADCAST_TORRENT_FILE_UPDATE);
-        intent.putExtra(DOWNLOAD_TORRENT_INDEX, fileInfo.getTorrentId());
-        intent.putExtra(DOWNLOAD_TORRENT_FILE_INDEX, fileInfo.getId());
+        intent.putExtra(DOWNLOAD_TASK_ID, fileInfo.getTorrentId());
+        intent.putExtra(DOWNLOAD_TASK_FILE_ID, fileInfo.getId());
         LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
     }
 

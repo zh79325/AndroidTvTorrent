@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -412,6 +413,10 @@ public class TorrentDetailActivity extends Activity {
 
     private void playDownload(TorrentTaskFile fileInfo) {
 
+        Intent intent = new Intent(this, PlayVideoActivity.class);
+        intent.putExtra(TorrentDownloadService.DOWNLOAD_TASK_ID, task.getId());
+        intent.putExtra(TorrentDownloadService.DOWNLOAD_TASK_FILE_ID, fileInfo.getId());
+        startActivity(intent);
     }
 
     private void pauseDownload(TorrentTaskFile fileInfo) {

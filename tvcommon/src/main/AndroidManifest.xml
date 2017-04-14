@@ -8,7 +8,12 @@
         android:supportsRtl="true">
         <service
             android:name=".service.TorrentDownloadService"
-            android:exported="false"></service>
+            android:exported="false" />
+        <service android:name=".service.MediaPlayerService"
+            android:enabled="false"
+            android:exported="false"/>
+
+        <activity android:name=".TestLayoutActivity"></activity>
     </application>
 
 </manifest>

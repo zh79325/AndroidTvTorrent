@@ -29,4 +29,8 @@ public class FolderUtil {
     public   static File getDownloadFolder(String fileName){
         return getFolder(APP_MAIN_FOLDER+"/"+DOWNLOAD+"/"+fileName);
     }
+
+    public   static File getDownloadFolder(){
+        return getFolder(APP_MAIN_FOLDER+"/"+DOWNLOAD);
+    }
 }

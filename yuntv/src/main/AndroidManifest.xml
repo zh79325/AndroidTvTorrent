@@ -58,7 +58,9 @@
             android:name=".LocalHistoryActivity"
             android:screenOrientation="behind"
             android:theme="@style/Theme.Leanback" />
-        <activity android:name=".PlayVideoActivity"></activity>
+        <activity android:name=".PlayVideoActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            ></activity>
     </application>
 
 </manifest>
