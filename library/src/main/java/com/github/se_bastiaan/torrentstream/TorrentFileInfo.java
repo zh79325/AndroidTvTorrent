@@ -198,7 +198,7 @@ public class TorrentFileInfo {
         Iterator<Integer> iterator= preparePieces.iterator();
         while (iterator.hasNext()){
             Integer piece =iterator.next();
-            if(pieceIndex==piece){
+            if(Boolean.TRUE.equals(downloadMap.get(piece))){
                 iterator.remove();
             }
         }
