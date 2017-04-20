@@ -236,6 +236,13 @@ public class TorrentFileInfo {
             return -1;
         }
 
+        if(preparePieces.size()>0){
+            int i=  preparePieces.iterator().next();
+            if(nextSevens.size()<maxNextSevenSize){
+                nextSevens.add(i);
+                return i;
+            }
+        }
         for (int i = firstPiece; i <= lastPiece; i++) {
             if(!Boolean.TRUE.equals(downloadMap.get(i))){
                 if(nextSevens.contains(i)){

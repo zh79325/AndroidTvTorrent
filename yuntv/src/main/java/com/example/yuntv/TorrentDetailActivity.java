@@ -248,6 +248,9 @@ public class TorrentDetailActivity extends Activity {
             }else{
                 updateStatus(true,"解析完成");
             }
+            if(task.isFinish()){
+                updateStatus(true,"已完成");
+            }
             final List<TorrentTaskFile> adaptorFiles=task.getFileList();
             ThreadUtils.runOnUiThread(new Runnable() {
                 @Override
@@ -333,12 +336,14 @@ public class TorrentDetailActivity extends Activity {
                 final String PAUSE="暂停";
                 final String CONTINUE="继续";
                 final String PLAY="播放";
-                if(downloading==-1){
-                    ops.add(DOWNLOAD);
-                }else if(downloading==0){
-                    ops.add(CONTINUE);
-                }else if(downloading==1){
-                    ops.add(PAUSE);
+                if(!fileInfo.isFinished()){
+                    if(downloading==-1){
+                        ops.add(DOWNLOAD);
+                    }else if(downloading==0){
+                        ops.add(CONTINUE);
+                    }else if(downloading==1){
+                        ops.add(PAUSE);
+                    }
                 }
                 if(fileInfo.isStreamReady()){
                     ops.add(PLAY);
@@ -383,7 +388,7 @@ public class TorrentDetailActivity extends Activity {
 
             }});
         IntentFilter statusIntentFilter = new IntentFilter(
-                TorrentDownloadService.BROADCAST_TORRENT_FILE_UPDATE);
+                TorrentDownloadService.BROADCAST_TORRENT_FILE_STATUS);
 
         DownloadStateReceiver mDownloadStateReceiver =
                 new DownloadStateReceiver(adaptor);
@@ -428,6 +433,11 @@ public class TorrentDetailActivity extends Activity {
     }
 
     public void updateTaskUI(TorrentTask task) {
-        updateStatus(true,String.format("%s  %s/s",TorrentAdaptor.readablePercent(task.getPercent()),TorrentAdaptor.readableFileSize((long) task.getSpeed())));
+        if(!task.isFinish()){
+            updateStatus(true,String.format("%s  %s/s",TorrentAdaptor.readablePercent(task.getPercent()),TorrentAdaptor.readableFileSize((long) task.getSpeed())));
+        }else{
+            updateStatus(true,"已完成");
+        }
+
     }
 }

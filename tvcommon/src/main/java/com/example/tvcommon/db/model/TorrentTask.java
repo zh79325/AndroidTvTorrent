@@ -29,7 +29,18 @@ public class TorrentTask extends BaseModel {
     @Column
     String fileStoreFolder;
 
+    @Column
+    boolean finish;
+
     List<TorrentTaskFile> fileList;
+
+    public boolean isFinish() {
+        return finish;
+    }
+
+    public void setFinish(boolean finish) {
+        this.finish = finish;
+    }
 
     public float getPercent() {
         return percent;

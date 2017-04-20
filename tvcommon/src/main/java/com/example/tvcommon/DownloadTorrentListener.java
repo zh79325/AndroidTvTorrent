@@ -10,18 +10,15 @@ import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.tvcommon.db.model.TorrentTaskFile_Table;
 import com.example.tvcommon.db.model.TorrentTask_Table;
 import com.example.tvcommon.service.TorrentDownloadService;
-import com.frostwire.jlibtorrent.LibTorrent;
-import com.frostwire.jlibtorrent.StatsMetric;
 import com.frostwire.jlibtorrent.alerts.Alert;
-import com.frostwire.jlibtorrent.alerts.PeerConnectAlert;
-import com.frostwire.jlibtorrent.alerts.PeerDisconnectedAlert;
-import com.frostwire.jlibtorrent.alerts.SessionStatsAlert;
 import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
 import com.github.se_bastiaan.torrentstream.TorrentFileInfo;
 import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
+import com.raizlabs.android.dbflow.sql.language.SQLCondition;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.tvcommon.service.TorrentDownloadService.DOWNLOAD_TASK_FILE_ID;
@@ -54,12 +51,35 @@ public class DownloadTorrentListener implements TorrentListener {
         torrent.startDownload();
     }
 
+    String getCacheString(TorrentTask task,TorrentTaskFile fileInfo){
+        String str="task_%d_(p:%.3f,sp:%.2f,f:%b) file_%d_(p%.3f,f%b,sr:%b)";
+        return String.format(str,
+                task.getId(),
+                task.getPercent(),
+                task.getSpeed(),
+                task.isFinish(),
+                fileInfo.getId(),
+                fileInfo.getPercent(),
+                fileInfo.isFinished(),
+                fileInfo.isStreamReady()
+                );
+    }
+
+    String prevStatus="";
+
     void notifyAdaptor(Torrent torrent, TorrentTaskFile fileInfo){
         TorrentFileInfo info=torrent.getFileInfo(fileInfo.getFileIndex());
         fileInfo.setPercent(info.progress());
         updateDataBase(fileInfo);
+
+        String status=getCacheString(task,fileInfo);
+        if(prevStatus.equalsIgnoreCase(status)){
+            Log.d("aaaaaaa","dddddd");
+           return;
+        }
+        prevStatus=status;
         Intent intent =
-                new Intent(TorrentDownloadService.BROADCAST_TORRENT_FILE_UPDATE);
+                new Intent(TorrentDownloadService.BROADCAST_TORRENT_FILE_STATUS);
         intent.putExtra(DOWNLOAD_TASK_ID, fileInfo.getTorrentId());
         intent.putExtra(DOWNLOAD_TASK_FILE_ID, fileInfo.getId());
         LocalBroadcastManager.getInstance(service).sendBroadcast(intent);
@@ -91,20 +111,33 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     private void updateDataBase(TorrentTaskFile fileInfo) {
+        List<SQLCondition> taskFileCondition=new ArrayList<>();
+        if(fileInfo.isFinished()){
+            taskFileCondition.add(TorrentTaskFile_Table.finished.eq(fileInfo.isFinished()));
+        }
+        if(fileInfo.isStreamReady()){
+            taskFileCondition.add(TorrentTaskFile_Table.streamReady.eq(fileInfo.isStreamReady()));
+        }
+        taskFileCondition.add(TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()));
+        taskFileCondition.add(TorrentTaskFile_Table.downloading.eq(1));
+        SQLCondition[] conditions= taskFileCondition.toArray(new SQLCondition[]{});
         SQLite.update(TorrentTaskFile.class)
                 .set(
-                        TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()),
-                        TorrentTaskFile_Table.streamReady.eq(fileInfo.isStreamReady()),
-                        TorrentTaskFile_Table.downloading.eq(1),
-                        TorrentTaskFile_Table.finished.eq(fileInfo.isFinished())
+                        conditions
                 )
                 .where(TorrentTaskFile_Table.id.eq(fileInfo.getId()))
                 .async()
                 .execute();
+        List<SQLCondition> taskCondition=new ArrayList<>();
+        taskCondition.add(TorrentTask_Table.percent.eq(task.getPercent()));
+        taskCondition.add(TorrentTask_Table.speed.eq(task.getSpeed()));
+        if(task.isFinish()){
+            taskCondition.add(TorrentTask_Table.finish.eq(task.isFinish()));
+        }
+        SQLCondition[] conditions2= taskCondition.toArray(new SQLCondition[]{});
         SQLite.update(TorrentTask.class)
                 .set(
-                        TorrentTask_Table.percent.eq(task.getPercent()),
-                        TorrentTask_Table.speed.eq(task.getSpeed())
+                        conditions2
                 )
                 .where(TorrentTask_Table.id.eq(task.getId()))
                 .async()
@@ -120,6 +153,9 @@ public class DownloadTorrentListener implements TorrentListener {
     public void onDownloadFinish(Torrent torrent, int index) {
         TorrentTaskFile fileInfo= task.getTaskFile(index);;
         fileInfo.setFinished(true);
+        if(torrent.finished()){
+            task.setFinish(true);
+        }
         notifyAdaptor(torrent, fileInfo);
     }
 
@@ -140,24 +176,7 @@ public class DownloadTorrentListener implements TorrentListener {
 //        Log.d("TorrentAlert", txt);
     }
 
-    private void sessionStatus(SessionStatsAlert alert) {
-        StringBuilder sb=new StringBuilder();
-        for (StatsMetric metric : LibTorrent.sessionStatsMetrics()) {
-            String name= metric.name;
-            int index=metric.valueIndex;
-            long  value = alert.value(index);
-            if(value!=0){
-                sb.append(name+"=>"+value+"\n");
-            }
-        }
-        Log.d("TorrentAlert", sb.toString());
-    }
 
-    private void peerDisConnected(PeerDisconnectedAlert alert) {
 
-    }
 
-    private void peerConnected(PeerConnectAlert alert) {
-
-    }
 }

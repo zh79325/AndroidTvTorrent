@@ -77,6 +77,10 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
             dText="正在下载";
         }
 
+        if(user.isFinished()){
+            dText="下载已完成";
+        }
+
         if(user.isStreamReady()){
             pText="可以播放";
         }

@@ -34,7 +34,7 @@ public class TorrentDownloadService extends IntentService {
 
     public static final String BROADCAST_TORRENT_UPDATE =
             "com.example.tvcommon.service.action.BROADCAST.TORRENT_UPDATE";
-    public static final String BROADCAST_TORRENT_FILE_UPDATE =
+    public static final String BROADCAST_TORRENT_FILE_STATUS =
             "com.example.tvcommon.service.action.BROADCAST.TORRENT_FILE_UPDATE";
     public TorrentDownloadService() {
         super("TorrentDownloadService");
