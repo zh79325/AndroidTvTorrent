@@ -3,7 +3,6 @@ package com.example.tvcommon;
 import android.app.Service;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.example.tvcommon.db.model.TorrentTask;
 import com.example.tvcommon.db.model.TorrentTaskFile;
@@ -52,7 +51,7 @@ public class DownloadTorrentListener implements TorrentListener {
     }
 
     String getCacheString(TorrentTask task,TorrentTaskFile fileInfo){
-        String str="task_%d_(p:%.3f,sp:%.2f,f:%b) file_%d_(p%.3f,f%b,sr:%b)";
+        String str="task_%d_(p:%.3f,sp:%.2f,f:%b) file_%d_(p%.3f,f%b,sr:%b,buf:%.2f)";
         return String.format(str,
                 task.getId(),
                 task.getPercent(),
@@ -61,7 +60,8 @@ public class DownloadTorrentListener implements TorrentListener {
                 fileInfo.getId(),
                 fileInfo.getPercent(),
                 fileInfo.isFinished(),
-                fileInfo.isStreamReady()
+                fileInfo.isStreamReady(),
+                fileInfo.getBufferRate()
                 );
     }
 
@@ -73,9 +73,8 @@ public class DownloadTorrentListener implements TorrentListener {
         updateDataBase(fileInfo);
 
         String status=getCacheString(task,fileInfo);
-        if(prevStatus.equalsIgnoreCase(status)){
-            Log.d("aaaaaaa","dddddd");
-           return;
+        if(status.equalsIgnoreCase(prevStatus)){
+            return;
         }
         prevStatus=status;
         Intent intent =
@@ -105,6 +104,7 @@ public class DownloadTorrentListener implements TorrentListener {
     public void onStreamProgress(Torrent torrent, StreamStatus status,int index) {
         TorrentTaskFile taskFile=task.getTaskFile(index);
         taskFile.setPercent(torrent.progress(index));
+        taskFile.setBufferRate(torrent.getFileInfo(index).bufferRate());
         task.setSpeed(status.downloadSpeed);
         task.setPercent(torrent.progress());
         notifyAdaptor(torrent, taskFile);
@@ -119,6 +119,7 @@ public class DownloadTorrentListener implements TorrentListener {
             taskFileCondition.add(TorrentTaskFile_Table.streamReady.eq(fileInfo.isStreamReady()));
         }
         taskFileCondition.add(TorrentTaskFile_Table.percent.eq(fileInfo.getPercent()));
+        taskFileCondition.add(TorrentTaskFile_Table.bufferRate.eq(fileInfo.getBufferRate()));
         taskFileCondition.add(TorrentTaskFile_Table.downloading.eq(1));
         SQLCondition[] conditions= taskFileCondition.toArray(new SQLCondition[]{});
         SQLite.update(TorrentTaskFile.class)

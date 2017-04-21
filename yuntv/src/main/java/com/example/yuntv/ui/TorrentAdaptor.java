@@ -1,7 +1,6 @@
 package com.example.yuntv.ui;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +11,6 @@ import com.example.tvcommon.db.model.TorrentTask;
 import com.example.tvcommon.db.model.TorrentTaskFile;
 import com.example.yuntv.R;
 import com.example.yuntv.TorrentDetailActivity;
-import com.github.se_bastiaan.torrentstream.StreamStatus;
-import com.github.se_bastiaan.torrentstream.Torrent;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -45,7 +42,7 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
     @NonNull
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        final TorrentTaskFile user = getItem(position);
+        final TorrentTaskFile taskFile = getItem(position);
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.torrent_file, parent, false);
         }
@@ -54,7 +51,7 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         TextView status = (TextView) convertView.findViewById(R.id.torrent_file_status);
 
 
-        float dPercent=user.getPercent();
+        float dPercent=taskFile.getPercent();
 
         if(dPercent<0){
             percent.setVisibility(View.GONE);
@@ -64,9 +61,9 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
             percent.setText(txt);
         }
 
-        name.setText(user.getFileName());
+        name.setText(taskFile.getFileName());
 
-        int downloading=user.getDownloading();
+        int downloading=taskFile.getDownloading();
 
         String dText="",pText="正在加载";
         if(downloading==-1){
@@ -74,14 +71,19 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
         }else if(downloading==0){
             dText="下载已暂停";
         }else if(downloading==1){
+            float buffer=taskFile.getBufferRate();
+            if(buffer!=1.0f){
+                pText="缓冲中 "+readablePercent(buffer);
+            }
             dText="正在下载";
+
         }
 
-        if(user.isFinished()){
+        if(taskFile.isFinished()){
             dText="下载已完成";
         }
 
-        if(user.isStreamReady()){
+        if(taskFile.isStreamReady()){
             pText="可以播放";
         }
 
@@ -107,10 +109,6 @@ public class TorrentAdaptor extends ArrayAdapter<TorrentTaskFile>{
     }
 
 
-    public void onStreamProgress(Torrent torrent, StreamStatus status) {
-        Log.d(TORRENT, "Progress: " + status.progress+" speed:"+readableFileSize((long) status.downloadSpeed)+"/s");
-        Log.d(TORRENT, "Buff Progress: " + status.bufferProgress+" seeds:"+status.seeds  );
-    }
 
 
     public void updateTaskUI(TorrentTask task) {

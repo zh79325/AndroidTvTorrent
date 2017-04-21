@@ -34,7 +34,18 @@ public class TorrentTaskFile extends BaseModel {
     int downloading;
 
     @Column
+    float bufferRate;
+
+    @Column
     long playPosition;
+
+    public float getBufferRate() {
+        return bufferRate;
+    }
+
+    public void setBufferRate(float bufferRate) {
+        this.bufferRate = bufferRate;
+    }
 
     public long getPlayPosition() {
         return playPosition;

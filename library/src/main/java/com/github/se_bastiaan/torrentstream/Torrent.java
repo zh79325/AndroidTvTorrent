@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Torrent implements AlertListener {
-    private final static Integer MAX_PREPARE_COUNT = 20;
+    private final static Integer MAX_PREPARE_COUNT = 10;
     private final static Integer MIN_PREPARE_COUNT = 2;
     private final static Integer DEFAULT_PREPARE_COUNT = 5;
     private final static Integer SEQUENTIAL_CONCURRENT_PIECES_COUNT = 5;

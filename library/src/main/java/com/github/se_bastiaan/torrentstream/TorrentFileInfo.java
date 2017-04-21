@@ -64,7 +64,7 @@ public class TorrentFileInfo {
 
     private Set<Integer> preparePieces;
     private Set<Integer> nextSevens=new HashSet<>();
-    int maxNextSevenSize=0;
+    int realParparesSize =0;
 
     public State getState() {
         return state;
@@ -86,7 +86,7 @@ public class TorrentFileInfo {
         for (int i = 0; i < prepareSize; i++) {
             preparePieces.add(firstPiece + i);
         }
-        maxNextSevenSize=preparePieces.size();
+        realParparesSize =preparePieces.size();
     }
 
     public void start(Torrent torrent, TorrentHandle torrentHandle, TorrentListener listener){
@@ -234,13 +234,13 @@ public class TorrentFileInfo {
         if(pieceIndex<firstPiece||pieceIndex>lastPiece){
             return -1;
         }
-        if(nextSevens.size()>=maxNextSevenSize){
+        if(nextSevens.size()>= realParparesSize){
             return -1;
         }
 
         if(preparePieces.size()>0){
             int i=  preparePieces.iterator().next();
-            if(nextSevens.size()<maxNextSevenSize){
+            if(nextSevens.size()< realParparesSize){
                 nextSevens.add(i);
                 return i;
             }
@@ -260,8 +260,22 @@ public class TorrentFileInfo {
     public float progress(){
         if(downloadMap.size()==0){
             return 0f;
+        }else if(finishNum==downloadMap.size()){
+            return 1.0f;
+        }else{
+            return 1.0f*finishNum/downloadMap.size();
         }
-        return 1.0f*finishNum/downloadMap.size();
+    }
+
+    public float bufferRate(){
+        if(preparePieces.size()==0){
+            return 1.0f;
+        }else if(preparePieces.size()==realParparesSize){
+            return 0;
+        }else{
+            return 1.0f-1.0f*preparePieces.size()/realParparesSize;
+        }
+
     }
 
     public int pieceNum(){

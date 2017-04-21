@@ -212,7 +212,7 @@ public class TorrentDetailActivity extends Activity {
 
                     files=new ArrayList<TorrentTaskFile>();
                     FileStorage fs=  torrentInfo.origFiles();
-                    String nameFolder= torrentInfo.name();//.substring(0,task.getFileName().lastIndexOf("."));
+                    String nameFolder= torrentInfo.name();
                     File storeFolder= FolderUtil.getDownloadFolder(nameFolder);
                     task.setFileStoreFolder(storeFolder.getAbsolutePath());
 
@@ -246,6 +246,22 @@ public class TorrentDetailActivity extends Activity {
                     file.delete();
                 }
             }else{
+                boolean hasRemove=false;
+                for (TorrentTaskFile taskFile : files) {
+                    File taskDownloadFile=taskFile.getDownloadFile();
+                    if(!taskDownloadFile.exists()){
+                        taskFile.setFinished(false);
+                        taskFile.setStreamReady(false);
+                        hasRemove=true;
+                        taskFile.update();
+
+                    }
+                }
+                if(hasRemove){
+                    task.setFinish(false);
+                    task.update();
+                }
+
                 updateStatus(true,"解析完成");
             }
             if(task.isFinish()){
