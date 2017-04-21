@@ -195,6 +195,11 @@ public class TorrentFileInfo {
             return false;
         }
 
+        if(downloadMap.containsKey(pieceIndex)){
+            downloadMap.put(pieceIndex,true);
+            finishNum++;
+        }
+
         Iterator<Integer> iterator= preparePieces.iterator();
         while (iterator.hasNext()){
             Integer piece =iterator.next();
@@ -202,10 +207,7 @@ public class TorrentFileInfo {
                 iterator.remove();
             }
         }
-        if(downloadMap.containsKey(pieceIndex)){
-            downloadMap.put(pieceIndex,true);
-            finishNum++;
-        }
+
         if(preparePieces.size()==0&&state==State.STARTING){
             state=State.STREAMING;
             listener.onStreamReady(torrentExtend,index);
