@@ -17,4 +17,4 @@
  *
  */
 
-include ':library', ':sample', ':yuntv', ':tvcommon', ':ijkplayer-armv7a-release', ':ijkplayer-java-release'
+include ':library', ':sample', ':yuntv', ':tvcommon', ':ijkplayer-armv7a-release', ':ijkplayer-java-release', ':ijkplayer-arm64-release', ':ijkplayer-x86-release', ':ijkplayer-x86_64-release', ':ijkplayer-armv5-release'

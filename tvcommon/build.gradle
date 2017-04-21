@@ -17,7 +17,7 @@ android {
     }
 
     lintOptions {
-        abortOnError true
+        abortOnError false
     }
 }
 ext {
@@ -48,4 +48,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile project(':ijkplayer-armv7a-release')
     compile project(':ijkplayer-java-release')
+    compile project(':ijkplayer-arm64-release')
+    compile project(':ijkplayer-x86-release')
+    compile project(':ijkplayer-x86_64-release')
+    compile project(':ijkplayer-armv5-release')
 }
