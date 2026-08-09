@@ -1,3 +1,5 @@
+
+
 TorrentStream-Android [![Release](https://jitpack.io/v/se-bastiaan/TorrentStream-Android.svg)](https://jitpack.io/#se-bastiaan/TorrentStream-Android)
 ======
 
@@ -36,7 +38,7 @@ TorrentOptions torrentOptions = new TorrentOptions.Builder()
                 .build();
 
 TorrentStream torrentStream = TorrentStream.init(torrentOptions);
-torrentStream.startStream("https://butterpoject.org/test.torrent");
+torrentStream.startStream("https://butterproject.org/test.torrent");
 ```
 
 If you want to get status information about the torrent then you might want to use `addListener` to attach a listener to your `TorrentStream` instance.
